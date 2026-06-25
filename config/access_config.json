@@ -1,0 +1,45 @@
+{
+  "rules_base_url": "https://raw.githubusercontent.com/sajalmittal00/Bi_Rule_Access/main/config",
+  
+  "rules_files": {
+    "Business Park":                    "business_park_rules.txt",
+    "Business Center":                  "business_center_rules.txt",
+    "Business Park and Center Overview": "business_park_centre_Overview.txt",
+    "Business Park Team Task Overview": "business_park_team_task_overview.txt"
+  },
+
+  "sql_reveal_users": [
+    "sajal.mittal@dubaisouth.ae",
+    "lakshmi.mohandas@dubaisouth.ae"
+  ],
+
+  "user_department_map": {
+    "navin.aswani@dubaisouth.ae":  [
+      "Business Center",
+      "Business Park",
+      "Business Park Team Task Overview",
+      "Business Park and Center Overview"
+    ],
+    "lakshmi.mohandas@dubaisouth.ae": [
+      "Business Center",
+      "Business Park",
+      "Business Park Team Task Overview",
+      "Business Park and Center Overview"
+    ],
+    "sajal.mittal@dubaisouth.ae": [
+      "Business Center",
+      "FreeZone",
+      "Business Park",
+      "Licensing",
+      "DSP Freehold",
+      "Business Park Team Task Overview",
+      "Business Park and Center Overview"
+    ],
+    "user1@dubaisouth.ae": [
+      "Business Center"
+    ],
+    "user2@dubaisouth.ae": [
+      "Business Center"
+    ]
+  }
+}
