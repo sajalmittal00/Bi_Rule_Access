@@ -1,0 +1,422 @@
+
+
+Generalized Rules:
+        1. this Department is meant to tell about the Visa and Establishment Cards Issued based on different Category
+
+
+FreeZone Rules:
+
+1. Active Visa/ Visa Issued:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: SF_Visa_LK_LOAD.Visa_Type__c (Types are like Freelancer, Student)
+   - SQL Query: SELECT COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL
+                  AND V.Renewed_By_Visa__c IS NULL
+                  AND LOWER(V.Visa_Validity_Status__c) = 'issued'
+                  AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                  AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                  AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                  AND A.Name <> 'International Trading (Test) 1'
+    - Visa_Type__c:
+
+
+2. Visa Validity Status:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: Visa_Validity_Status__c
+   - SQL Query: SELECT Visa_Validity_Status__c,COUNT(DISTINCT Id) AS VisaCount FROM SF_Visa_LK_LOAD
+                WHERE Visa_Issue_Date__c IS NOT NULL
+                  AND Renewed_By_Visa__c IS NULL
+                GROUP BY Visa_Validity_Status__c;
+    - Visa Validity Status: 
+
+3. Visa Applicant by Age Range:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: Visa_Type__c
+   - SQL Query: SELECT CASE  WHEN V.Age__c < 18 THEN '< 18 years' WHEN V.Age__c BETWEEN 18 AND 35 THEN '18 to 35 years' WHEN V.Age__c > 35 THEN '> 35 years' END AS AgeRange,COUNT(DISTINCT V.Id) AS VisaCountFROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL
+                              AND V.Renewed_By_Visa__c IS NULL
+                              AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                              AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                              AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                              AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY CASE WHEN V.Age__c < 18 THEN '< 18 years' WHEN V.Age__c BETWEEN 18 AND 35 THEN '18 to 35 years' WHEN V.Age__c > 35 THEN '> 35 years' END;
+
+4. Visa Applicant Gender:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: Visa_Type__c
+   - SQL Query: SELECT Applicant_Gender__c,COUNT(DISTINCT Id) AS VisaCount FROM SF_Visa_LK_LOAD
+                WHERE Visa_Issue_Date__c IS NOT NULL
+                  AND Renewed_By_Visa__c IS NULL
+                GROUP BY Applicant_Gender__c              
+
+5. Visa Based on Nationality:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: Dl_Current_Nationality__c (these are the Country Names from which they have applied for Visa)
+   - SQL Query: SELECT V.Dl_Current_Nationality__c,COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL
+                  AND V.Renewed_By_Visa__c IS NULL
+                  AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                  AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                  AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                  AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY V.Dl_Current_Nationality__c
+             
+6. Visa Applicant on Degree / Qualifications:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: Dl_Qualification__c (these are the Degree of the Visa Applicants who have applied for Visa)
+   - SQL Query: SELECT V.Dl_Qualification__c,COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL
+                  AND V.Renewed_By_Visa__c IS NULL
+                  AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                  AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                  AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                  AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY V.Dl_Qualification__c
+    - Dl_Qualification__c : 
+
+7. Visa Applicant Job Title:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: Job_Title__c (these are the Job Titles of the Visa Applicants who have applied for Visa)
+   - SQL Query: SELECT V.Job_Title__c,COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A 
+                    ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL
+                  AND V.Renewed_By_Visa__c IS NULL
+                  AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                  AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                  AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                  AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY V.Job_Title__c
+
+    - Job_Title__c:
+
+8. Visa Applicant Account Department:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: SF_Account_LK_LOAD.Department__c (these are the departments from where the Visa Application have come)
+   - SQL Query: SELECT CASE WHEN instr(A.Department__c, ';') > 0 THEN substring(A.Department__c, 1, instr(A.Department__c, ';') - 1) ELSE A.Department__c END AS Department,COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+            LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+            WHERE V.Visa_Issue_Date__c IS NOT NULL
+                  AND V.Renewed_By_Visa__c IS NULL
+                  AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                  AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                  AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                  AND A.Name <> 'International Trading (Test) 1'
+            GROUP BY 
+              CASE WHEN instr(A.Department__c, ';') > 0  THEN substring(A.Department__c, 1, instr(A.Department__c, ';') - 1) ELSE A.Department__c END;
+    - Department__c :
+
+9. Visa Applicants by Company Status:
+   - Primary Table: SF_Visa_LK_LOAD
+   - SQL Query: SELECT CASE WHEN A.Total_Block_Requests__c IS NULL THEN NULL WHEN A.Total_Block_Requests__c < 1 THEN 'Allowed' ELSE 'Blocked' END AS Company_Status, COUNT(DISTINCT V.Id) AS VisaCount
+                FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A  ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL
+                  AND V.Renewed_By_Visa__c IS NULL
+                  AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                  AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                  AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                  AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY CASE WHEN A.Total_Block_Requests__c IS NULL  THEN NULL WHEN A.Total_Block_Requests__c < 1 THEN 'Allowed' ELSE 'Blocked' END;
+
+
+10. Visa Applicants by Account Record Type:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: SF_Account_LK_LOAD.Record_Type_Name__c 
+   - SQL Query: SELECT A.Record_Type_Name__c,COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL
+                  AND V.Renewed_By_Visa__c IS NULL
+                  AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                  AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                  AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                  AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY A.Record_Type_Name__c;
+    -Record_Type_Name__c: 
+
+11. Visa Applicants by Monthly Salary/ Salary Visa Applicants/Salary wise :
+   - Primary Table: SF_Visa_LK_LOAD
+   - SQL Query: SELECT CASE WHEN Total_Monthly_Salary_in_AED__c < 2500 THEN 'Up to 2.5K' 
+                            WHEN Total_Monthly_Salary_in_AED__c < 5000 THEN '2.5 to 5K' 
+                            WHEN Total_Monthly_Salary_in_AED__c < 10000 THEN '5 to 10K' 
+                            WHEN Total_Monthly_Salary_in_AED__c < 15000 THEN '10 to 15K' ELSE '15K and above' END AS Salary_Range, 
+                            COUNT(DISTINCT Id) AS VisaCount FROM SF_Visa_LK_LOAD
+                WHERE Visa_Issue_Date__c IS NOT NULL
+                AND Renewed_By_Visa__c IS NULL
+                GROUP BY CASE WHEN Total_Monthly_Salary_in_AED__c < 2500 THEN 'Up to 2.5K' 
+                              WHEN Total_Monthly_Salary_in_AED__c < 5000 THEN '2.5 to 5K' 
+                              WHEN Total_Monthly_Salary_in_AED__c < 10000 THEN '5 to 10K' 
+                              WHEN Total_Monthly_Salary_in_AED__c < 15000 THEN '10 to 15K' ELSE '15K and above' END
+
+12.  New/Renewal Visa Trend:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Date Column: SF_Visa_LK_LOAD.Visa_Issue_Date__c
+   - SQL Query: SELECT CASE WHEN V.Renewal_for_Visa__c IS NULL THEN 'New' ELSE 'Renewal' END AS Visa_Status,
+                COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A  ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL 
+                AND V.Renewed_By_Visa__c IS NULL 
+                AND Visa_Validity_Status__c ='Issued'
+                AND YEAR(V.Visa_Issue_Date__c)=2025
+                AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY CASE WHEN V.Renewal_for_Visa__c IS NULL THEN 'New' ELSE 'Renewal' END
+
+
+13.  New/Renewal Visa Trend by Department:
+   - Primary Table: SF_Visa_LK_LOAD
+   - Date Column: SF_Visa_LK_LOAD.Visa_Issue_Date__c
+   - SQL Query: SELECT CASE WHEN V.Renewal_for_Visa__c IS NULL THEN 'New' ELSE 'Renewal' END AS Visa_Status,
+                CASE WHEN instr(A.Department__c, ';') > 0 THEN substring(A.Department__c, 1, instr(A.Department__c, ';') - 1) ELSE A.Department__c END AS Department,
+                COUNT(DISTINCT V.Id) AS VisaCount FROM SF_Visa_LK_LOAD V
+                LEFT JOIN SF_Account_LK_LOAD A  ON V.Sponsoring_Company__c = A.Id
+                WHERE V.Visa_Issue_Date__c IS NOT NULL 
+                AND V.Renewed_By_Visa__c IS NULL 
+                AND Visa_Validity_Status__c ='Issued'
+                AND YEAR(V.Visa_Issue_Date__c)=2025
+                AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+                AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+                AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL)
+                AND A.Name <> 'International Trading (Test) 1'
+                GROUP BY CASE WHEN V.Renewal_for_Visa__c IS NULL THEN 'New' ELSE 'Renewal' END,
+                CASE WHEN instr(A.Department__c, ';') > 0 THEN substring(A.Department__c, 1, instr(A.Department__c, ';') - 1) ELSE A.Department__c END
+
+14(a). Employee Visa Quota Valid
+   - Primary Table: SF_Visa_LK_LOAD
+   - Date Column: SF_Visa_LK_LOAD.Visa_Issue_Date__c
+   - SQL Query: SELECT SUM(MaxQuota) as Total_Employment_Visa_Quota_Valid,
+        FROM (SELECT A.Id AS AccountId,MAX(A.Total_Employment_Visa_Quota__c) AS MaxQuota,FROM SF_Visa_LK_LOAD V 
+        LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+            WHERE V.Visa_Expiry_Date__c >= CURRENT_DATE()
+            GROUP BY A.Id )
+ 
+14(b). Additional Employee Visa Quota Valid
+   - Primary Table: SF_Visa_LK_LOAD
+   - Date Column: SF_Visa_LK_LOAD.Visa_Issue_Date__c
+   - SQL Query: SELECT 
+                       SUM(AddQuota) as Total_Additional_Employment_Visa_Quota_Valid
+        FROM (SELECT A.Id AS AccountId,MAX(A.Additional_Employment_Visa_Quota__c) as AddQuota FROM SF_Visa_LK_LOAD V
+            LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+            WHERE V.Visa_Expiry_Date__c >= CURRENT_DATE()
+            GROUP BY A.Id )
+
+14(c). Current Employee Visa Valid
+   - Primary Table: SF_Visa_LK_LOAD
+   - Date Column: SF_Visa_LK_LOAD.Visa_Issue_Date__c
+   - SQL Query: SELECT SUM(CurrQuota) as Total_Current_Employment_Visas_Valid
+        FROM (SELECT A.Id AS AccountId,MAX(A.Current_Employment_Visas__c) as CurrQuota FROM SF_Visa_LK_LOAD V
+            LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+            WHERE V.Visa_Expiry_Date__c >= CURRENT_DATE()
+            GROUP BY A.Id )
+
+14(d). Total Employee Visa Avalaible
+   - Primary Table: SF_Visa_LK_LOAD
+   - Date Column: SF_Visa_LK_LOAD.Visa_Issue_Date__c
+   - SQL Query: SELECT SUM(AvailQuota) as Total_Employment_Visa_Quota_Available_Valid
+        FROM (SELECT A.Id AS AccountId,MAX(A.Employment_Visa_Quota_Available__c) as AvailQuota FROM SF_Visa_LK_LOAD V
+            LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id
+            WHERE V.Visa_Expiry_Date__c >= CURRENT_DATE()
+            GROUP BY A.Id )
+
+15. Chinese Company Top Services Availed:
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - Category Column: SF_Invoice_LK_LOAD1.Service_Name__c
+   - SQL Query: SELECT I.Service_Name__c, SUM(I.Paid_Amount__c) FROM SF_Invoice_LK_LOAD1 I
+                LEFT JOIN SF_Account_LK_LOAD A ON I.Received_From__c = A.Id
+                WHERE I.Service_Provider__c = 'Free Zone'
+                AND I.Account_Name__c IN ('EAZY Consultants DWC-LLC','Impression China Catering DWC-LLC','KW Public Relations DWC-LLC','Quality Bond Consultants DWC-LLC','Wind Cloud Business DWC-LLC')
+                GROUP BY I.Service_Name__c
+    - Service Name: 
+
+
+16. Chinese Company Payment Trends:
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - Category Column: SF_Invoice_LK_LOAD1.Payment_Date__c
+   - SQL Query: SELECT SUM(I.Paid_Amount__c),Year(Payment_Date__c) as Year FROM SF_Invoice_LK_LOAD1 I
+                LEFT JOIN SF_Account_LK_LOAD A ON I.Received_From__c = A.Id
+                WHERE I.Service_Provider__c = 'Free Zone'
+                AND Paid_Amount__c > 0
+                AND I.Account_Name__c IN ('EAZY Consultants DWC-LLC','Impression China Catering DWC-LLC','KW Public Relations DWC-LLC','Quality Bond Consultants DWC-LLC','Wind Cloud Business DWC-LLC')
+                group by Year(Payment_Date__c)
+   
+17. Number of Company having Employees 
+   - Primary Table: SF_Visa_LK_LOAD
+   - Category Column: No_of_Employers_having_Employees (this means how many Companies are having 5,6,7,...100...10000 Employees)
+   - SQL Query: SELECT CASE 
+                WHEN EmpCount >= 1  AND EmpCount < 5   THEN 'Up to 5 employees' 
+                WHEN EmpCount >= 5  AND EmpCount <= 15 THEN '5 to 15 employees'
+                WHEN EmpCount >= 16 AND EmpCount <= 50 THEN '16 to 50 employees' 
+                WHEN EmpCount >= 51 AND EmpCount <= 100 THEN '51 to 100 employees' 
+                WHEN EmpCount >= 101 AND EmpCount <= 250 THEN '101 to 250 employees' 
+                WHEN EmpCount >= 251 AND EmpCount <= 500 THEN '251 to 500 employees'
+                WHEN EmpCount >= 501 THEN 'Above 500' 
+            END AS No_of_Employers_having_Employees,  
+            COUNT(*) AS EmployerCount 
+        FROM (
+            SELECT 
+                COALESCE(A.Name, 'blanks') AS AccountName, 
+                COUNT(DISTINCT V.Id) AS EmpCount 
+            FROM SF_Visa_LK_LOAD V  
+            LEFT JOIN SF_Account_LK_LOAD A ON V.Sponsoring_Company__c = A.Id 
+            WHERE V.Visa_Issue_Date__c IS NOT NULL 
+              AND V.Renewed_By_Visa__c IS NULL 
+              AND V.Visa_Validity_Status__c = 'Issued' 
+              AND V.Visa_Type__c <> 'Student' 
+              AND (A.Is_Expo_Concession__c = false OR A.Is_Expo_Concession__c IS NULL)
+              AND (A.EXPO_Participants_Registration__c = false OR A.EXPO_Participants_Registration__c IS NULL)
+              AND (A.Is_Expo_Commercial__c = false OR A.Is_Expo_Commercial__c IS NULL) 
+              AND A.Name <> 'International Trading (Test) 1' 
+            GROUP BY A.Name
+        ) Sub
+        GROUP BY 
+            CASE 
+                WHEN EmpCount >= 1  AND EmpCount < 5   THEN 'Up to 5 employees' 
+                WHEN EmpCount >= 5  AND EmpCount <= 15 THEN '5 to 15 employees'
+                WHEN EmpCount >= 16 AND EmpCount <= 50 THEN '16 to 50 employees' 
+                WHEN EmpCount >= 51 AND EmpCount <= 100 THEN '51 to 100 employees' 
+                WHEN EmpCount >= 101 AND EmpCount <= 250 THEN '101 to 250 employees' 
+                WHEN EmpCount >= 251 AND EmpCount <= 500 THEN '251 to 500 employees'
+                WHEN EmpCount >= 501 THEN 'Above 500' 
+            END;
+
+
+18. Establishment Card Issued:
+   - Primary Table: SF_EstablishmentCard_LK_LOAD
+   - Date Column: Issue_Date__c
+   - SQL Query:Select count(DISTINCT Id) from SF_EstablishmentCard_LK_LOAD
+    where Expiry_Date__c > Current_Date()
+    and Expiry_Date__c <= Current_date + INterval 3 Year
+
+    - Rules: 
+        If User Questions mentions  YoY, MoM or any timeframe for Establishment Card Issue use this query and Time column Issue_Date__c
+
+
+19. Establishment Card Status:
+   - Primary Table: SF_EstablishmentCard_LK_LOAD
+   - SQL Query: Select E.Status__c,count(DISTINCT A.Id) from SF_EstablishmentCard_LK_LOAD E
+                LEFT JOIN SF_Account_LK_LOAD A on E.Company__c=A.Id
+                    where E.Expiry_Date__c >= Current_date()
+                    and Expiry_Date__c <= Current_date + INterval 3 Year
+                    group by E.Status__c
+   - Status__c:
+
+20. Establishment Card based on Account Department
+   - Primary Table: SF_EstablishmentCard_LK_LOAD
+   - SQL Query: Select  CASE WHEN instr(A.Department__c, ';') > 0 THEN substring(A.Department__c, 1, instr(A.Department__c, ';') - 1) ELSE A.Department__c END AS Department,count(*) from SF_EstablishmentCard_LK_LOAD E
+                LEFT JOIN SF_Account_LK_LOAD A on E.Company__c=A.Id
+                where E.Expiry_Date__c >= Current_date()
+                and Expiry_Date__c <= Current_date + INterval 6 Year
+                group by  CASE WHEN instr(A.Department__c, ';') > 0 THEN substring(A.Department__c, 1, instr(A.Department__c, ';') - 1) ELSE A.Department__c END
+
+
+21. Establishment Card Based on Comapany Status
+   - Primary Table: SF_EstablishmentCard_LK_LOAD
+   - SQL Query: Select CASE WHEN A.Total_Block_Requests__c IS NULL THEN NULL WHEN A.Total_Block_Requests__c < 1 THEN 'Allowed' ELSE 'Blocked' END AS Company_Status,count(Distinct E.Id) from SF_EstablishmentCard_LK_LOAD E
+                LEFT JOIN SF_Account_LK_LOAD A on E.Company__c=A.Id
+                where E.Expiry_Date__c >= Current_date()
+                and Expiry_Date__c <= Current_date + INterval 6 Year
+                group by CASE WHEN A.Total_Block_Requests__c IS NULL THEN NULL WHEN A.Total_Block_Requests__c < 1 THEN 'Allowed' ELSE 'Blocked' END
+
+22. Establishment Card Based on Comapany Status
+   - Primary Table: SF_EstablishmentCard_LK_LOAD
+   - SQL Query: Select CASE WHEN A.Total_Block_Requests__c IS NULL THEN NULL WHEN A.Total_Block_Requests__c < 1 THEN 'Allowed' ELSE 'Blocked' END AS Company_Status,count(Distinct E.Id) from SF_EstablishmentCard_LK_LOAD E
+                LEFT JOIN SF_Account_LK_LOAD A on E.Company__c=A.Id
+                where E.Expiry_Date__c >= Current_date()
+                and Expiry_Date__c <= Current_date + INterval 6 Year
+                group by CASE WHEN A.Total_Block_Requests__c IS NULL THEN NULL WHEN A.Total_Block_Requests__c < 1 THEN 'Allowed' ELSE 'Blocked' END
+
+23. Establishment Card Based on Record Type
+   - Primary Table: SF_EstablishmentCard_LK_LOAD
+   - SQL Query: Select A.Record_Type_Name__c,count(Distinct E.Id) from SF_EstablishmentCard_LK_LOAD E
+                LEFT JOIN SF_Account_LK_LOAD A on E.Company__c=A.Id
+                where E.Expiry_Date__c >= Current_date()
+                and Expiry_Date__c <= Current_date + INterval 6 Year
+                group by A.Record_Type_Name__c
+
+24. Establishment Card Number of Transactions/Establishment Card Number of Transactions based on Service
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - Category Column: Service_Name__c, MONTH(Payment_Due_Date__c)
+   - SQL Query: Select Payment_Due_Date__c,count(DISTINCT Id) from SF_Invoice_LK_LOAD1
+                where Service_Provider__c='Free Zone'
+                and Service_Category__c='Establishment Cards'
+                and YEAR(Payment_Date__c)=YEAR(current_date())
+                group by MONTH(Payment_Due_Date__c)
+
+    - Services: 
+
+25. Establishment Card Number of Transactions
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - Category Column: Service_Name__c, MONTH(Payment_Due_Date__c)
+   - SQL Query: Select Payment_Due_Date__c,count(DISTINCT Id) from SF_Invoice_LK_LOAD1
+                where Service_Provider__c='Free Zone'
+                and Service_Category__c='Establishment Cards'
+                and YEAR(Payment_Date__c)=YEAR(current_date())
+                group by MONTH(Payment_Due_Date__c)
+
+26. Establishment Card Transaction Total Amount Paid/Payment Amount/Remaining Amount/Number of transaction by Service
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - Category Column: Service_Name__c
+   - SQL Query: SELECT Service_Name__c, SUM(Amount__c) AS PaymentAmount, SUM(Paid_Amount__c) AS AmountPaid,SUM(Remaining_Amount__c) AS RemainingAmount,COUNT(DISTINCT Id) AS NumberOfTransactions FROM SF_Invoice_LK_LOAD1
+                WHERE Service_Provider__c = 'Free Zone' AND Service_Category__c = 'Card Management' AND YEAR(Payment_Date__c) = YEAR(CURRENT_DATE)
+                GROUP BY Service_Name__c;
+
+28. Establishment Card Expiry Report
+   - Primary Table: SF_EstablishmentCard_LK_LOAD
+   - SQL Query: SELECT E.Name,E.Establishment_Card_Number__c,A.Name AS Account_Name,E.Status__c , CASE WHEN A.Total_Block_Requests__c IS NULL THEN NULL WHEN A.Total_Block_Requests__c < 1 THEN 'Allowed' ELSE 'Blocked' END AS Company_Status,E.Issue_Date__c FROM SF_EstablishmentCard_LK_LOAD E
+                LEFT JOIN SF_Account_LK_LOAD A ON E.Company__c = A.Id
+                WHERE E.Expiry_Date__c >= CURRENT_DATE AND E.Expiry_Date__c <= DATEADD(YEAR, 6, CURRENT_DATE)
+
+29. Revenue
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - SQL Query: SELECT SUM(R.Amount_Incl_VAT_KT__c) AS FullYearRevenue, 
+                (SUM(R.Amount_Incl_VAT_KT__c) / 12) * MONTH(CURRENT_TIMESTAMP) AS YTDRevenue, 
+                (SUM(R.Amount_Incl_VAT_KT__c) / 55000000) * 100 AS FullYearAchievedPercentage, 
+                (SUM(R.Amount_Incl_VAT_KT__c) / ((55000000 / 12) * MONTH(CURRENT_TIMESTAMP))) * 100 AS YTDAchievedPercentage 
+                FROM SF_Invoice_LK_LOAD1 I 
+                LEFT JOIN SF_InvoiceLineItem_LK_LOAD ILI ON I.Id = ILI.Invoice__c 
+                LEFT JOIN SF_Receipt_Template_LK_LOAD R ON ILI.Service__c = R.Id 
+                WHERE I.Service_Provider__c = 'Free Zone' 
+                AND YEAR(I.Payment_Date__c) = YEAR(CURRENT_TIMESTAMP);
+   - Annual Target for Free Zone - (eg. 2025-> 55M)
+
+
+30. Remaining Amount/Paid Amount/Payment Amount
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - Date Column: Payment_Date__c
+   - SQL Query: SELECT SUM(Amount__c) AS PaymentAmount,sum(Paid_Amount__c) as PaidAmount,sum(Remaining_Amount__c) as RemainingAmount FROM SF_Invoice_LK_LOAD1 I
+                WHERE Service_Provider__c = 'Free Zone' 
+                AND Status__c in ('Paid','Posted','Partially Paid')
+                AND YEAR(Payment_Date__c) = YEAR(CURRENT_DATE);
+
+31. TOP 10 Companies By Paid Amount/ Paid Amount by Servive Category
+   - Primary Table: SF_Invoice_LK_LOAD1
+   - Category Column: Service_Category__c : (Services Names)
+                      Account_Name__c : (Companies Names)
+   - SQL Query: SELECT Account_Name__c,sum(Paid_Amount__c) as PaidAmount FROM SF_Invoice_LK_LOAD1 I
+                WHERE Service_Provider__c = 'Free Zone' 
+                AND Status__c in ('Paid','Posted','Partially Paid')
+                AND YEAR(Payment_Date__c) = YEAR(CURRENT_DATE)
+                GROUP BY Account_Name__c
+                ORDER by sum(Paid_Amount__c) DESC LIMIT 10
+              
+
+. Time filters (Fabric Lakehouse SQL - preferred, safe across year boundaries):
+   - DEFAULT (no explicit time qualifier in user question): WHERE YEAR(Date column) = YEAR(current_date())
+   - Last month:WHERE YEAR(Date column) = YEAR(current_date()) AND MONTH(Date column) = MONTH(current_date()) -1 
+   - Last quarter:WHERE YEAR(Date column) = YEAR(current_date()) AND QUARTER(Date column) = QUARTER(current_date()) - 1
+   - Last year:WHERE YEAR(Date column) = YEAR(current_date()) - 1
+   - Year-to-date (YTD):WHERE YEAR(Date column) = YEAR(current_date()) AND Date column <= current_date()
+   - Monthwise grouping (use these expressions  GROUP BY): GROUP BY YEAR(Date column), MONTH(Date column)
+   - Quarterwise grouping: GROUP BY YEAR(Date column), QUARTER(Date column)
+   - Yearwise grouping: GROUP BY YEAR(Date column)
+
+. Always alias aggregated fields clearly (e.g., SUM(Amount__c) AS Revenue, COUNT(DISTINCT Id) AS Deals).
+
+Notes for the LLM / SQL generator:
+- Recognize common phrasings (Q2, last Q, current year, this year, last month, month-to-date) and map them to the patterns above.
+- If the result is shown by category, include the overall sum/total at the end.       

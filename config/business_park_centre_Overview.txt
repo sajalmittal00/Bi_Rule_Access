@@ -1,0 +1,864 @@
+Data Dictionary :
+
+{
+  "data_dictionary": {
+    "stg_sf_TenancyContract": {
+      "description": "Core contract table representing tenancy agreements made with companies.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a contract done with a company."
+        },
+        "Name": {
+          "description": "Name of the contract, generally starts with 'TCO'. Helps identify the contract in Salesforce."
+        },
+        "First_Line_Item_Unit_Name__c": {
+          "description": "Inventory unit name leased for the contract. A contract can have multiple inventory units associated, but only the first one is chosen and tagged in this column."
+        },
+        "Number_of_Installments__c": {
+          "description": "Total number of payment installments for a contract between the contract start and end date."
+        },
+        "Rent_Free_Period_Days__c": {
+          "description": "Total number of days where rent is free. This period is outside of the contract start and end date."
+        },
+        "Tenant__c": {
+          "description": "Foreign key joining to stg_sf_Account. Represents the Client ID / Account ID."
+        },
+        "Contract_Start_Date__c": {
+          "description": "The starting date of the contract."
+        },
+        "Contract_Expiry_Date__c": {
+          "description": "The ending date of the contract."
+        },
+        "Rent_Start_Date__c": {
+          "description": "The official start date of contract payments on paper. May differ from Contract_Start_Date__c."
+        },
+        "Annual_Service_Charges_Formula__c": {
+          "description": "Service charges other than the annual rent of a contract."
+        },
+        "Total_Service_Charges_Payments__c": {
+          "description": "Total service charges payments other than the annual rent of a contract."
+        },
+        "Contract_Duration__c": {
+          "description": "Duration of the contract. Expressed in years at the contract level, and also available in months."
+        },
+        "CS_Team_Member__c": {
+          "description": "Salesperson name who helped close the deal with the client. When coalesced with Opportunity_Lead_Owner__c, used as a joining key for stg_sf_SalespersonYearlyTarget."
+        },
+        "Opportunity_Lead_Owner__c": {
+          "description": "Salesperson name who helped close the deal with the client. When coalesced with CS_Team_Member__c, used as a joining key for stg_sf_SalespersonYearlyTarget."
+        },
+        "Lead_Source__c": {
+          "description": "The source of the lead (e.g., website, walk-in). Used to segment customers.",
+          "value_definitions": {
+            "New Client": "New customers to the business.",
+            "Upgrade Existing client": "Customers who upgraded their contract.",
+            "Downgrade Existing client": "Customers who downgraded their contract.",
+            "Downgrade from BP": "Customers who downgraded from a Business Park contract.",
+            "All": "Includes all lead sources.",
+            "New + Upgrade": "Includes 'New Client' and 'Upgrade Existing client'."
+          }
+        },
+        "Total_Area__c": {
+          "description": "The total area leased by the customer under the contract."
+        },
+        "DWC_Signed_Date__c": {
+          "description": "The date when the contract was signed. Used to determine the revenue timeline across monthly, quarterly, and yearly periods."
+        },
+        "Actual_1st_Year_Rent__c": {
+          "description": "Used as the annual rent of the contract for products in stg_sf_ContractLineItem whose Product_Type_Name__c contains 'smart' in the name."
+        },
+        "Total_Rent_Price_Formula__c": {
+          "description": "The annual rent for general contract cases (non-smart product types)."
+        },
+        "Renewed_Contract__c": {
+          "description": "If null, this is the first contract and represents a new customer. If populated, it is a self-joining key referencing the details of the previous/old contract."
+        },
+        "Manually_Cancelled__c": {
+          "description": "Flag indicating whether a contract has been manually cancelled by the client.",
+          "value_definitions": {
+            "0": "Not cancelled.",
+            "1": "Manually cancelled from the client side."
+          }
+        },
+        "Activated_Date__c": {
+          "description": "The date the contract was activated. If null, no revenue has started flowing into the business."
+        },
+        "Cancellation_Date__c": {
+          "description": "The date when a manually cancelled contract was cancelled."
+        },
+        "Cancellation_Type__c": {
+          "description": "The type of cancellation applied to the contract.",
+          "value_definitions": {
+            "Termination": "The contract was terminated by Dubai South (the contract provider).",
+            "Cancel and Downgrade": "The contract plan was downgraded to a cheaper plan.",
+            "Upgraded to other BU": "The contract was shifted to another department.",
+            "Cancel Company": "The company was cancelled due to any reason.",
+            "Cancel and Upgrade": "The contract plan was upgraded to a better plan and services.",
+            "Cancel Unit": "One or more units from a multi-unit contract were cancelled.",
+            "Upgrade to BP": "Upgraded to Business Park (more expensive; whole office is leased).",
+            "Downgrade to BC": "Downgraded to Business Center (cheaper; only a desk is allocated with license and visa)."
+          }
+        },
+        "Company_Registration_Date__c": {
+          "description": "The date the company was registered when it joined Dubai South."
+        },
+        "Grand_Total__c": {
+          "description": "Grand total representing broker customer revenue."
+        },
+        "IS_BC_Contract__c": {
+          "description": "Flag indicating the contract type. 'Yes' means it is a Business Center contract; 'No' means it is a Business Park contract."
+        },
+        "Old_Contract_Expiry_Date__c": {
+          "description": "Expiry date of the client's old contract, or the expiry date that was originally decided in the initial phase of the current contract."
+        },
+        "Record_Type_Name__c": {
+          "description": "The record type of the contract.",
+          "value_definitions": {
+            "BC Contract Under Renewal": "A Business Center contract currently under renewal discussions but not yet finalized.",
+            "Approved": "The contract has been approved by Dubai South but has not yet started.",
+            "Under Renewal Submitted for Finance Approval": "The contract renewal is under review by the Finance Department for monetary discussions.",
+            "Under Process Submitted for Finance Approval": "The contract renewal is under review for paperwork processing.",
+            "Cancelled": "The contract has been cancelled.",
+            "Active": "The contract is currently active, applicable to both BP and BC contracts.",
+            "Under Cancellation Submitted for Finance Approval": "The contract cancellation is under review by the Finance Department.",
+            "Draft": "The contract is in a drafted state and not yet in action.",
+            "Expired": "The contract validity has expired with no further action taken.",
+            "Under Renewal": "The contract is currently under renewal.",
+            "Under Cancellation For Company": "The contract is under cancellation due to company-level reasons.",
+            "Under Cancellation": "The contract is in the process of being cancelled."
+          }
+        },
+        "Tenant_Name__c": {
+          "description": "The client name. Corresponds to the Name field in stg_sf_Account."
+        },
+        "Status__c": {
+          "description": "Current status of the contract. Only 'Active' contracts are used for calculations.",
+          "value_definitions": {
+            "Active": "Active contract included in calculations.",
+            "Approved": "Contract approved but not yet active.",
+            "Transferred to DA": "Contract transferred to another authority.",
+            "Submitted To Finance": "Contract submitted to the finance department.",
+            "Relocated": "Contract has been relocated.",
+            "Rejected": "Contract was rejected.",
+            "Approved By Finance": "Contract approved by the finance team.",
+            "Denied": "Contract was denied.",
+            "Cancelled": "Contract was cancelled.",
+            "Draft": "Contract is in draft state.",
+            "Renewed": "Contract has been renewed.",
+            "In Review": "Contract is under review.",
+            "Terminated": "Contract was terminated.",
+            "Expired": "Contract has expired.",
+            "Sent to RM": "Contract sent to Relationship Manager.",
+            "Sent to Customer": "Contract sent to the customer.",
+            "Submitted for Finance Approval": "Contract is pending finance department approval."
+          }
+        }
+      }
+    },
+    "stg_sf_Account": {
+      "description": "Account table representing clients or companies that sign tenancy contracts.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for an account/client. Joining key for stg_sf_TenancyContract (Tenant__c) and stg_sf_InventoryUnit (Account__c)."
+        },
+        "Name": {
+          "description": "Customer name, client name, or account name of the entity signing contracts."
+        },
+        "CountryName_of_Origin__c": {
+          "description": "The country of origin from which the account holder originates."
+        },
+        "Current_Employment_Visas__c": {
+          "description": "The number of employment visas currently being used by the account holder for their employees."
+        },
+        "Employment_Visa_Quota_Available__c": {
+          "description": "The total number of employment visas allocated to the account holder that are currently unused and available."
+        },
+        "Total_Employment_Visa_Quota__c": {
+          "description": "The total number of employment visas allotted to the company/account."
+        }
+      }
+    },
+    "stg_sf_ContractLineItem": {
+      "description": "Line item table representing individual inventory units associated with a tenancy contract.",
+      "columns": {
+        "Contract__c": {
+          "description": "Foreign key joining to stg_sf_TenancyContract (Id)."
+        },
+        "Product_Type_Name__c": {
+          "description": "Product name associated with the business. For Business Park and Business Center contracts, relevant product types are considered here."
+        },
+        "Inventory_Unit_Status__c": {
+          "description": "Availability status of an inventory unit.",
+          "value_definitions": {
+            "Leased": "The unit is currently being used under an active contract.",
+            "Available": "The unit is available for a new contract.",
+            "Reserved": "The unit is booked for a client and deal discussions are still in progress.",
+            "DWC Usage": "The unit is used by the business for internal operations.",
+            "Legal Case": "The unit is in a legal dispute due to non-payment past the due date.",
+            "Obsolete": "The unit is no longer available and cannot be leased."
+          }
+        }
+      }
+    },
+    "stg_sf_InventoryUnit": {
+      "description": "Table representing individual inventory units within buildings that can be leased to clients.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for an inventory unit within a building. Joining key for stg_sf_ContractLineItem. Used to map an inventory unit to a contract."
+        },
+        "Name": {
+          "description": "Name of the inventory unit."
+        },
+        "Current_Tenant_Name__c": {
+          "description": "The account name, client name, or tenant name of the entity currently utilizing the building unit."
+        },
+        "Availability__c": {
+          "description": "Current availability status of the inventory unit.",
+          "value_definitions": {
+            "Leased": "The unit is currently being used under an active contract.",
+            "Available": "The unit is available for a new contract.",
+            "Reserved": "The unit is booked for a client and deal discussions are still in progress.",
+            "DWC Usage": "The unit is used by the business for internal operations.",
+            "Legal Case": "The unit is in a legal dispute due to non-payment past the due date.",
+            "Obsolete": "The unit is no longer available and cannot be leased."
+          }
+        },
+        "Building_Number__c": {
+          "description": "The building number in which the inventory unit exists (e.g., A1, A2, A3)."
+        },
+        "Account__c": {
+          "description": "Lookup key for stg_sf_Account (Id)."
+        },
+        "Parent_Unit__c": {
+          "description": "Corresponds to First_Line_Item_Unit_Name__c from stg_sf_TenancyContract. A contract is associated with multiple inventory units which are grouped under a single parent unit."
+        },
+        "Area_in_sq_m__c": {
+          "description": "Area of the inventory unit in square meters."
+        },
+        "Is_BC_Inventory__c": {
+          "description": "Flag indicating the inventory type. 'Yes' means it is a Business Center inventory unit; 'No' means it is a Business Park inventory unit."
+        },
+        "Product_Type_Name__c": {
+          "description": "Product type of the inventory unit. For Business Park only, the relevant products are: 'hq kiosk', 'head quarter', 'office park'."
+        }
+      }
+    },
+    "stg_sf_Opportunity": {
+      "description": "Table representing sales opportunities, tracking deals from initial identification through to closure.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for an opportunity. Joining key for stg_sf_OpportunityLineItem (OpportunityId). Also used to count the number of deals."
+        },
+        "Name": {
+          "description": "Name of the opportunity, typically the client or account name with whom deal discussions are ongoing."
+        },
+        "CreatedDate": {
+          "description": "The start date of the opportunity."
+        },
+        "CloseDate": {
+          "description": "The end date of the opportunity, whether successful or failed, or the expected closing date."
+        },
+        "StageName": {
+          "description": "The current stage of the opportunity in the sales pipeline.",
+          "value_definitions": {
+            "Opening": "Initial stage where a potential customer has been identified and basic requirements are being gathered.",
+            "Qualification": "The sales team has confirmed a valid business need, budget, authority, and timeline.",
+            "Gaps Development": "Customer requirements are being analyzed to identify gaps between existing solutions and customer needs.",
+            "Solution Development": "The proposed solution is being designed and tailored to customer requirements, including pricing and scope.",
+            "Under Review": "The proposal or solution is under review by the customer or internal stakeholders.",
+            "Negotiation": "Commercial terms, pricing, and contract conditions are being negotiated.",
+            "Offer Letter": "A formal offer, proposal, or letter of intent has been issued to the customer.",
+            "Pending Payment": "The customer has agreed to proceed and the opportunity is awaiting payment or financial commitment.",
+            "Closing": "Final administrative or contractual activities are being completed before marking as won or lost.",
+            "Closed Won": "The opportunity was successfully converted into business. The customer accepted the offer.",
+            "Close Won": "Equivalent to Closed Won. May be a legacy or duplicate stage to be reviewed for standardization.",
+            "Close Lost": "The opportunity was not won. The prospect did not proceed, selected a competitor, or lacked budget."
+          }
+        },
+        "OwnerId": {
+          "description": "Salesperson ID. Joining key for stg_sf_User (Id) to map the opportunity to a salesperson name."
+        }
+      }
+    },
+    "stg_sf_OpportunityLineItem": {
+      "description": "Line item table representing products associated with a sales opportunity.",
+      "columns": {
+        "Product2Id": {
+          "description": "Joining key for stg_sf_Product (Id)."
+        }
+      }
+    },
+    "stg_sf_Quote": {
+      "description": "Table representing quotes created for sales opportunities, tracking pipeline revenue and approval status.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a quote. Joining key for stg_sf_QuoteLineItem (QuoteId)."
+        },
+        "Discounted_Annual_Rent__c": {
+          "description": "Pipeline customer revenue expected to come into the company if the pipeline opportunity is successfully closed."
+        },
+        "Status__c": {
+          "description": "Current status of the quote.",
+          "value_definitions": {
+            "Draft": "The quote is being created and is not yet ready for review.",
+            "Needs Review": "The quote requires review by internal stakeholders before proceeding.",
+            "In Review": "The quote is currently under formal review by management, finance, legal, or other approvers.",
+            "Approved": "All required internal approvals have been obtained and the quote is authorized for customer presentation.",
+            "Rejected": "The quote was rejected during the approval process and requires modification.",
+            "Denied": "An approver has formally denied the quote. Typically considered a final rejection.",
+            "Presented": "The approved quote has been shared with the customer for evaluation.",
+            "Sent for Signing": "The quote has been sent to the customer for formal signature.",
+            "Signed": "The customer has signed the quote, indicating formal commitment.",
+            "Accepted": "The customer has accepted the quote and all approvals/signatures are complete. Ready for contract or invoicing.",
+            "Cancelled": "The quote has been withdrawn or cancelled before completion.",
+            "Transfer": "The quote ownership or processing has been transferred to another department or entity.",
+            "Forfeited": "The quote opportunity has been abandoned or expired because the customer did not proceed within the required timeframe."
+          }
+        }
+      }
+    },
+    "stg_sf_User": {
+      "description": "Table representing salespersons associated with opportunities.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a salesperson. Joining key for stg_sf_Opportunity (OwnerId) to map opportunities to salesperson names."
+        },
+        "Name": {
+          "description": "Name of the salesperson."
+        }
+      }
+    },
+    "stg_sf_QuoteLineItem_LOAD": {
+      "description": "Aggregated subquery table derived from quote line items, summarizing total area per quote.",
+      "columns": {
+        "QuoteId": {
+          "description": "Joining key for stg_sf_Quote (Id)."
+        },
+        "Quantity": {
+          "description": "The area involved in the deal for which the quote has been created. Aggregated as TotalArea (SUM of Quantity grouped by QuoteId)."
+        }
+      }
+    },
+    "stg_sf_Invoice": {
+      "description": "Table representing invoices raised against a tenancy contract. A single contract can have multiple invoices, each corresponding to a payment installment. The planned installment schedule is defined in stg_sf_TenancyContractPayments.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for an invoice. A contract can have multiple invoices, each representing a payment installment against the yearly rent."
+        },
+        "Name": {
+          "description": "Name of the invoice. Used to track and identify the invoice in Salesforce."
+        },
+        "Remaining_Amount__c": {
+          "description": "The outstanding amount that the client has not yet paid on the invoice."
+        },
+        "Paid_Amount__c": {
+          "description": "The amount that has already been paid by the client against the invoice."
+        },
+        "Amount__c": {
+          "description": "The total amount due for that installment as specified in the invoice."
+        },
+        "Tenancy_Contract__c": {
+          "description": "Foreign key joining to stg_sf_TenancyContract (Id)."
+        },
+        "Tenancy_Contract_Payments__c": {
+          "description": "Foreign key joining to stg_sf_TenancyContractPayments (Id)."
+        },
+        "Due_Date__c": {
+          "description": "The last date by which the invoice amount must be paid. Payments after this date are considered overdue."
+        },
+        "Status__c": {
+          "description": "Current payment status of the invoice.",
+          "value_definitions": {
+            "Draft": "The invoice has been created but not yet finalized or posted to the accounting system. It may still be edited.",
+            "Posted": "The invoice has been finalized and officially recorded in the accounting or ERP system. It is now due for payment.",
+            "Partially Paid": "The customer has made a partial payment against the invoice, but an outstanding balance remains.",
+            "Paid": "The invoice has been fully settled with no outstanding balance remaining.",
+            "PDC Received": "A Post-Dated Cheque (PDC) has been received from the customer as a commitment for future payment. The payment may not yet be realized in the bank.",
+            "CN Applied": "A Credit Note (CN) has been applied to the invoice, reducing or adjusting the amount payable due to refunds, corrections, discounts, or other financial adjustments.",
+            "Cancelled": "The invoice has been voided and is no longer valid for collection or processing."
+          }
+        },
+        "Account_Name__c": {
+          "description": "Client name, account holder name, or customer name associated with the invoice."
+        },
+        "Due_Date_From__c": {
+          "description": "The start date of the due date range. Used to identify, filter, or report invoices or obligations that become due on or after this date."
+        },
+        "Due_Date_To__c": {
+          "description": "The end date of the due date range. Used to identify, filter, or report invoices or obligations that become due on or before this date."
+        }
+      }
+    },
+    "stg_sf_TenancyContractPayments": {
+      "description": "Table representing the planned payment schedule for a tenancy contract. Each record defines an installment plan linked to a contract. Joining key for stg_sf_Invoice.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a tenancy contract payment plan record. Joining key for stg_sf_Invoice (Tenancy_Contract_Payments__c)."
+        }
+      }
+    }
+  }
+}
+
+Business Park & Center Overview Rules:
+
+
+1. Total Active Customers,Total Active Customers/ Total Active Contracts /Total Active Accounts /Total Active Clients::
+    - Purpose: Total Active Customers across Business Park AND Business Center combined
+    - SQL Query: SELECT SUM(Active_Customers) AS ActiveCustomers
+    FROM
+    (
+    SELECT COUNT(DISTINCT t.Id) AS Business_Park_Active_Customers
+    FROM stg_sf_TenancyContract t
+    LEFT JOIN stg_sf_Account a ON t.Tenant__c = a.Id
+    WHERE t.Contract_Expiry_Date__c >= DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0)
+    AND (t.Surrender_Date__c >= DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0) OR t.Surrender_Date__c IS NULL)
+    AND (t.Cancellation_Date__c IS NULL OR YEAR(t.Cancellation_Date__c) = YEAR(GETDATE()))
+    AND t.IS_BC_Contract__c = 0
+    AND t.Manually_Cancelled__c = 0
+    AND LOWER(t.Status__c) IN ('active','approved','expired','in review','renewed','submitted to finance','cancelled')
+    AND (LOWER(t.First_Line_Item_Unit_Name__c) LIKE '%op%' OR LOWER(t.First_Line_Item_Unit_Name__c) LIKE '%hq%')
+    AND LOWER(t.First_Line_Item_Unit_Name__c) NOT LIKE '%bc%'
+
+    UNION ALL
+
+    SELECT COUNT(DISTINCT t.Id) AS Business_Center_Active_Customers FROM stg_sf_TenancyContract t
+    INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+    LEFT JOIN stg_sf_Account a ON t.Tenant__c = a.Id
+    WHERE t.Manually_Cancelled__c = 0 AND t.Status__c = 'Active'
+    AND (t.Cancellation_Date__c IS NULL OR t.Cancellation_Date__c >= GETDATE())
+    AND (
+                LOWER(cli.Product_Type_Name__c) LIKE '%permanent desk%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%permanent office%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%smart desk%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%smart office%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%permanent exclusive office%'
+            )
+    ) AS X;
+
+
+2. Active Customers/ Contracts/ Clients/ Accounts in Business Park / BP/ Park/ :
+    - Purpose: Active Customers in Business Park ONLY (NOT Business Center)
+    - Date Column: Contract_Expiry_Date__c
+    - SQL Query: SELECT COUNT(DISTINCT t.Id) AS Business_Park_Active_Customers
+        FROM stg_sf_TenancyContract t
+        LEFT JOIN stg_sf_Account a ON t.Tenant__c = a.Id
+        WHERE t.Contract_Expiry_Date__c >= DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0)
+        AND (t.Surrender_Date__c >= DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0) OR t.Surrender_Date__c IS NULL)
+        AND (t.Cancellation_Date__c IS NULL OR YEAR(t.Cancellation_Date__c) = YEAR(GETDATE()))
+        AND t.IS_BC_Contract__c = 0 AND t.Manually_Cancelled__c = 0
+        AND LOWER(t.Status__c) IN ('active','approved','expired','in review','renewed','submitted to finance','cancelled')
+        AND (LOWER(t.First_Line_Item_Unit_Name__c) LIKE '%op%' OR LOWER(t.First_Line_Item_Unit_Name__c) LIKE '%hq%')
+        AND LOWER(t.First_Line_Item_Unit_Name__c) NOT LIKE '%bc%'
+
+3. Active Customers/ Contracts/ Clients/ Accounts in Business Center / BC / Center/ :
+    - Purpose: Active Customers in Business Center ONLY (NOT Business Park)
+    - Date Column: Activated_Date__c
+    - SQL Query: SELECT COUNT(DISTINCT t.Id) AS Business_Center_Active_Customers FROM stg_sf_TenancyContract t
+    INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+    LEFT JOIN stg_sf_Account a ON t.Tenant__c = a.Id
+    WHERE t.Manually_Cancelled__c = 0 AND t.Status__c = 'Active'
+    AND (t.Cancellation_Date__c IS NULL OR t.Cancellation_Date__c >= GETDATE())
+    AND (
+                LOWER(cli.Product_Type_Name__c) LIKE '%permanent desk%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%permanent office%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%smart desk%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%smart office%'
+                OR LOWER(cli.Product_Type_Name__c) LIKE '%permanent exclusive office%'
+            )
+
+4.New Deal Customer Business Park, Lease Price from New Deals Business Park, Total Area Leased For Business Park :
+    - Purpoes: New Customer Who have made a deal with Business Park 
+    - SQL Query : SELECT LeadGroup, COUNT(DISTINCT Id) AS NewDealCustomers
+                                FROM (
+                                    SELECT t.Id, 'New Customer' AS LeadGroup
+                                    FROM stg_sf_TenancyContract t
+                                    INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+                                    LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id
+                                    WHERE
+                                        LOWER(cli.Product_Name__c) IN ('hq kiosk', 'head quarter', 'office park')  -- DAX only has these 3, no LIKE conditions
+                                        AND t.Manually_Cancelled__c = 0
+                                        AND t.Activated_Date__c IS NOT NULL
+                                        AND old.Name IS NULL
+                                        AND t.DWC_Signed_Date__c >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+                                        AND t.DWC_Signed_Date__c <= EOMONTH(GETDATE(), 0)          -- YTD up to current month end
+                                        AND t.Lead_Source__c NOT IN ('Downgrade Existing client', 'Upgrade Existing client')
+                                    GROUP BY t.Id
+
+                                    UNION ALL
+
+                                    SELECT t.Id, 'Upgrade' AS LeadGroup
+                                    FROM stg_sf_TenancyContract t
+                                    INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+                                    LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id
+                                    WHERE
+                                        LOWER(cli.Product_Name__c) IN ('hq kiosk', 'head quarter', 'office park')
+                                        AND t.Manually_Cancelled__c = 0
+                                        AND t.Activated_Date__c IS NOT NULL
+                                        AND old.Name IS NULL
+                                        AND t.DWC_Signed_Date__c >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+                                        AND t.DWC_Signed_Date__c <= EOMONTH(GETDATE(), 0)
+                                        AND t.Lead_Source__c IN ('Upgrade Existing client')
+                                    GROUP BY t.Id
+
+                                    UNION ALL
+
+                                    SELECT t.Id, 'Downgrade' AS LeadGroup
+                                    FROM stg_sf_TenancyContract t
+                                    INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+                                    LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id
+                                    WHERE
+                                        LOWER(cli.Product_Name__c) IN ('hq kiosk', 'head quarter', 'office park')
+                                        AND t.Manually_Cancelled__c = 0
+                                        AND t.Activated_Date__c IS NOT NULL
+                                        AND old.Name IS NULL
+                                        AND t.DWC_Signed_Date__c >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+                                        AND t.DWC_Signed_Date__c <= EOMONTH(GETDATE(), 0)
+                                        AND t.Lead_Source__c IN ('Downgrade Existing client')
+                                    GROUP BY t.Id
+
+                                    UNION ALL
+
+                                    SELECT t.Id, 'All' AS LeadGroup
+                                    FROM stg_sf_TenancyContract t
+                                    INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+                                    LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id
+                                    WHERE
+                                        LOWER(cli.Product_Name__c) IN ('hq kiosk', 'head quarter', 'office park')
+                                        AND t.Manually_Cancelled__c = 0
+                                        AND t.Activated_Date__c IS NOT NULL
+                                        AND old.Name IS NULL
+                                        AND t.DWC_Signed_Date__c >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+                                        AND t.DWC_Signed_Date__c <= EOMONTH(GETDATE(), 0)
+                                    GROUP BY t.Id
+
+                                ) X
+                                GROUP BY LeadGroup
+
+        - RULE: When generating revenue queries that reference a contract table plus any child table (e.g., stg_sf_ContractLineItem), always produce SQL that 
+    (1) identifies eligible contracts (filter by product using EXISTS or join), 
+    (2) aggregates to a single row per contract (e.g., GROUP BY t.Id and MAX/SUM to compute a contract-level revenue), then 
+    (3) aggregates those contract-level rows into the requested period (day/month/quarter/year). Handle edge cases for previous-period calculations (Q1 → prev quarter = Q4 of prev year, month = January → prev month = Dec of prev year). Prefer old.Id IS NULL when excluding renewed contracts.
+                               
+
+
+5.New Deal Customer Business Center, Lease Price from New Deals Business Center, Total Area Leased For Business Center :
+    - Purpoes: New Customer Who have made a deal with Business Center 
+    - Date Column: 
+    - SQL Query : SELECT LeadGroup,COUNT(DISTINCT Id)  AS NewDealCustomer,SUM(Rent)           AS LeasePrice
+                  FROM (
+                      SELECT 
+                          t.Id,
+                          MAX(t.Actual_1st_Year_Rent__c) AS Rent,
+                          CASE 
+                              WHEN t.Lead_Source__c = 'Upgrade Existing client'   THEN 'Upgrade'
+                              WHEN t.Lead_Source__c = 'Downgrade Existing client' THEN 'Downgrade'
+                              ELSE 'New Customer'
+                          END AS LeadGroup
+                      FROM stg_sf_TenancyContract t
+                      INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+                      LEFT JOIN  stg_sf_TenancyContract old  ON t.Renewed_Contract__c = old.Id
+                      WHERE t.IS_BC_Contract__c = 1 
+                                    AND t.Manually_Cancelled__c = 0 
+                                    AND t.Renewed_Contract__c IS NULL 
+                                    AND t.Activated_Date__c IS NOT NULL 
+                                    AND YEAR(t.DWC_Signed_Date__c) = YEAR(GETDATE())
+                                    AND MONTH(t.DWC_Signed_Date__c) <= 12
+                  
+                      GROUP BY 
+                          t.Id,
+                          CASE 
+                              WHEN t.Lead_Source__c = 'Upgrade Existing client'   THEN 'Upgrade'
+                              WHEN t.Lead_Source__c = 'Downgrade Existing client' THEN 'Downgrade'
+                              ELSE 'New Customer'
+                          END
+                  ) X
+                  GROUP BY LeadGroup
+                  
+                  UNION ALL
+                  SELECT 
+                      'All'               AS LeadGroup,
+                      COUNT(DISTINCT t.Id) AS NewDealCustomer,
+                      SUM(t.Actual_1st_Year_Rent__c) AS LeasePrice
+                  FROM stg_sf_TenancyContract t
+                  INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+                  LEFT JOIN  stg_sf_TenancyContract old  ON t.Renewed_Contract__c = old.Id
+                      WHERE t.IS_BC_Contract__c = 1 
+                                    AND t.Manually_Cancelled__c = 0 
+                                    AND t.Renewed_Contract__c IS NULL 
+                                    AND t.Activated_Date__c IS NOT NULL 
+                                    AND YEAR(t.DWC_Signed_Date__c) = YEAR(GETDATE())
+                                    AND MONTH(t.DWC_Signed_Date__c) <= 12
+
+
+        - RULE: When generating revenue queries that reference a contract table plus any child table (e.g., stg_sf_ContractLineItem), always produce SQL that 
+    (1) identifies eligible contracts (filter by product using EXISTS or join), 
+    (2) aggregates to a single row per contract (e.g., GROUP BY t.Id and MAX/SUM to compute a contract-level revenue), then 
+    (3) aggregates those contract-level rows into the requested period (day/month/quarter/year). Handle edge cases for previous-period calculations (Q1 → prev quarter = Q4 of prev year, month = January → prev month = Dec of prev year). Prefer old.Id IS NULL when excluding renewed contracts.
+                  
+                  
+                 
+
+6. Total New Deal Customers and Lease Price (Business Park + Business Center Combined) / total new deals / total lease price / overall new deal:
+    - Purpose: Total New Deal Customers and Lease Price across BOTH Business Park and Business Center
+    - Date Column: DWC_Signed_Date__c
+    - SQL Query: SELECT LeadGroup, COUNT(DISTINCT Id)  AS TotalNewDealCustomers, SUM(LeasePrice)     AS TotalLeasePrice
+        FROM (
+
+            -- Business Park
+            SELECT
+                t.Id,
+                MAX(t.Total_Rent_Price_Formula__c) AS LeasePrice,
+                CASE
+                    WHEN t.Lead_Source__c = 'Upgrade Existing client'   THEN 'Upgrade'
+                    WHEN t.Lead_Source__c = 'Downgrade Existing client' THEN 'Downgrade'
+                    ELSE 'New Customer'
+                END AS LeadGroup
+            FROM stg_sf_TenancyContract t
+            INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+            LEFT JOIN  stg_sf_TenancyContract old  ON t.Renewed_Contract__c = old.Id
+            WHERE LOWER(cli.Product_Name__c) IN ('hq kiosk', 'head quarter', 'office park')
+            AND t.Manually_Cancelled__c = 0
+            AND t.Activated_Date__c     IS NOT NULL
+            AND old.Name                IS NULL
+            AND t.DWC_Signed_Date__c >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+            AND t.DWC_Signed_Date__c <= EOMONTH(GETDATE(), 0)
+            GROUP BY
+                t.Id,
+                CASE
+                    WHEN t.Lead_Source__c = 'Upgrade Existing client'   THEN 'Upgrade'
+                    WHEN t.Lead_Source__c = 'Downgrade Existing client' THEN 'Downgrade'
+                    ELSE 'New Customer'
+                END
+
+            UNION ALL
+
+            -- Business Center
+            SELECT
+                t.Id,
+                MAX(t.Actual_1st_Year_Rent__c) AS LeasePrice,
+                CASE
+                    WHEN t.Lead_Source__c = 'Upgrade Existing client'   THEN 'Upgrade'
+                    WHEN t.Lead_Source__c = 'Downgrade Existing client' THEN 'Downgrade'
+                    ELSE 'New Customer'
+                END AS LeadGroup
+            FROM stg_sf_TenancyContract t
+            INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+            LEFT JOIN  stg_sf_TenancyContract old  ON t.Renewed_Contract__c = old.Id
+            WHERE t.IS_BC_Contract__c  = 1
+            AND t.Manually_Cancelled__c = 0
+            AND t.Renewed_Contract__c   IS NULL
+            AND t.Activated_Date__c     IS NOT NULL
+            AND YEAR(t.DWC_Signed_Date__c)  = YEAR(GETDATE())
+            AND MONTH(t.DWC_Signed_Date__c) <= 12
+            GROUP BY
+                t.Id,
+                CASE
+                    WHEN t.Lead_Source__c = 'Upgrade Existing client'   THEN 'Upgrade'
+                    WHEN t.Lead_Source__c = 'Downgrade Existing client' THEN 'Downgrade'
+                    ELSE 'New Customer'
+                END
+
+        ) X
+        GROUP BY LeadGroup
+
+        UNION ALL
+
+        -- All row (BP + BC combined, no lead source filter)
+        SELECT
+            'All'               AS LeadGroup,
+            COUNT(DISTINCT Id)  AS TotalNewDealCustomers,
+            SUM(LeasePrice)     AS TotalLeasePrice
+        FROM (
+            SELECT t.Id, MAX(t.Total_Rent_Price_Formula__c) AS LeasePrice
+            FROM stg_sf_TenancyContract t
+            INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+            LEFT JOIN  stg_sf_TenancyContract old  ON t.Renewed_Contract__c = old.Id
+            WHERE LOWER(cli.Product_Name__c) IN ('hq kiosk', 'head quarter', 'office park')
+            AND t.Manually_Cancelled__c = 0
+            AND t.Activated_Date__c     IS NOT NULL
+            AND old.Name                IS NULL
+            AND t.DWC_Signed_Date__c >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+            AND t.DWC_Signed_Date__c <= EOMONTH(GETDATE(), 0)
+            GROUP BY t.Id
+
+            UNION ALL
+
+            SELECT t.Id, MAX(t.Actual_1st_Year_Rent__c) AS LeasePrice
+            FROM stg_sf_TenancyContract t
+            INNER JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+            LEFT JOIN  stg_sf_TenancyContract old  ON t.Renewed_Contract__c = old.Id
+            WHERE t.IS_BC_Contract__c   = 1
+            AND t.Manually_Cancelled__c = 0
+            AND t.Renewed_Contract__c   IS NULL
+            AND t.Activated_Date__c     IS NOT NULL
+            AND YEAR(t.DWC_Signed_Date__c)  = YEAR(GETDATE())
+            AND MONTH(t.DWC_Signed_Date__c) <= 12
+            GROUP BY t.Id
+        ) ALL_X
+
+  - RULE: When generating revenue queries that reference a contract table plus any child table (e.g., stg_sf_ContractLineItem), always produce SQL that 
+    (1) identifies eligible contracts (filter by product using EXISTS or join), 
+    (2) aggregates to a single row per contract (e.g., GROUP BY t.Id and MAX/SUM to compute a contract-level revenue), then 
+    (3) aggregates those contract-level rows into the requested period (day/month/quarter/year). Handle edge cases for previous-period calculations (Q1 → prev quarter = Q4 of prev year, month = January → prev month = Dec of prev year). Prefer old.Id IS NULL when excluding renewed contracts.
+
+
+7. Occupancy %:
+    - Main Table: stg_sf_InventoryUnit
+    - Category Column: Building_Number__c
+    - SQL Query: SELECT 
+    inv.Building_Number__c,
+    ROUND(100 * SUM(CASE 
+              WHEN LOWER(inv.Product_Type_Name__c) IN ('hq kiosk','head quarter','office park') 
+               AND inv.Parent_Unit__c IS NULL 
+               AND (LOWER(inv.Availability__c) IN ('leased','dwc usage') OR inv.Is_BC_Inventory__c = 1 OR inv.Availability__c IS NULL) 
+               AND LOWER(inv.Record_Type_Name__c) IN ('atm','building','office') 
+              THEN inv.Area_in_sq_m__c ELSE 0 END) 
+        / NULLIF(SUM(CASE 
+              WHEN (inv.Is_BC_Inventory__c = 1 OR inv.Availability__c IS NULL OR LOWER(inv.Availability__c) NOT IN ('blocked','legal case','not available','obsolete')) 
+               AND inv.Parent_Unit__c IS NULL 
+               AND LOWER(inv.Product_Type_Name__c) IN ('hq kiosk','head quarter','office park') 
+               AND LOWER(inv.Record_Type_Name__c) IN ('atm','building','office') 
+              THEN inv.Area_in_sq_m__c ELSE 0 END), 0) 
+        , 1) AS OccupancyPercent 
+FROM stg_sf_InventoryUnit inv   
+WHERE inv.Building_Number__c IN ('C1','C2','D1','D2','A1','A2','B2','A4','A3','A5','B4','HQ','B1','B5','B3')
+GROUP BY inv.Building_Number__c
+ORDER BY OccupancyPercent DESC;
+    - Always Show in Percentage
+
+8. Net Leasable Area:
+    - Main Table: stg_sf_InventoryUnit
+    - Category Column: Building_Number__c
+    - SQL Query: SELECT SUM(NetArea) AS NetLeasableArea FROM
+    (
+    SELECT
+        inv.Area_in_sq_m__c AS NetArea
+    FROM stg_sf_InventoryUnit inv
+    WHERE
+        (
+            inv.Is_BC_Inventory__c = 1
+            OR inv.Availability__c IS NULL
+            OR LOWER(inv.Availability__c) NOT IN
+               ('blocked','legal case','not available','obsolete')
+        )
+        AND inv.Parent_Unit__c IS NULL
+        AND LOWER(inv.Product_Type_Name__c) IN
+            ('hq kiosk','head quarter','office park')
+        AND LOWER(inv.Record_Type_Name__c) IN
+            ('atm','building','office')
+        AND inv.Building_Number__c IN ('C1','C2','D1','D2','A1','A2','B2','A4','A3','A5','B4','HQ','B1','B5','B3')
+
+    UNION ALL
+
+    SELECT
+        inv.Area_in_sq_m__c AS NetArea
+    FROM stg_sf_InventoryUnit inv
+    WHERE
+        LOWER(inv.Product_Type_Name__c) IN
+            ('hq kiosk','head quarter','office park')
+        AND inv.Parent_Unit__c IS NULL
+        AND LOWER(inv.Record_Type_Name__c) = 'retail'
+        AND LOWER(inv.Availability__c) IN
+            ('leased','dwc usage')
+        AND
+        (
+            inv.Is_BC_Inventory__c = 1
+            OR inv.Availability__c IS NULL
+            OR LOWER(inv.Availability__c) NOT IN
+               ('blocked','not available','obsolete')
+        )
+        AND inv.Building_Number__c IN ('C1','C2','D1','D2','A1','A2','B2','A4','A3','A5','B4','HQ','B1','B5','B3')
+) A;
+
+9. Sum Leased Area: 
+    - Main Table: stg_sf_InventoryUnit
+    - Category Column: Building_Number__c
+    - SQL Query: SELECT SUM(inv.Area_in_sq_m__c) AS LeasedArea
+    FROM stg_sf_InventoryUnit inv
+    WHERE
+        LOWER(inv.Product_Type_Name__c) IN ('hq kiosk','head quarter','office park')
+        AND inv.Parent_Unit__c IS NULL
+        AND (LOWER(inv.Availability__c) IN ('leased','dwc usage') OR inv.Is_BC_Inventory__c = 1 OR inv.Availability__c IS NULL)
+        AND LOWER(inv.Record_Type_Name__c) IN ('atm','building','office','retail')
+        AND inv.Building_Number__c IN ('C1','C2','D1','D2','A1','A2','B2','A4','A3','A5','B4','HQ','B1','B5','B3');
+
+10. Total Leasable Area: 
+    - Main Table: stg_sf_InventoryUnit
+    - Category Column: Building_Number__c
+    - SQL Query: SELECT SUM(inv.Area_in_sq_m__c) AS TotalLeasableArea
+                FROM stg_sf_InventoryUnit inv
+                WHERE (inv.Is_BC_Inventory__c = 1 OR inv.Availability__c IS NULL OR LOWER(inv.Availability__c) NOT IN ('blocked','not available','obsolete'))
+                AND inv.Parent_Unit__c IS NULL
+                AND LOWER(inv.Product_Type_Name__c) IN ('hq kiosk','head quarter','office park')
+                AND
+                ( LOWER(inv.Record_Type_Name__c) IN ('atm','building','office')
+                    OR
+                    ( LOWER(inv.Record_Type_Name__c) = 'retail' AND LOWER(inv.Availability__c) IN ('leased','dwc usage')
+                    )
+                )
+                AND inv.Building_Number__c IN ('C1','C2','D1','D2','A1','A2','B2','A4','A3','A5','B4','HQ','B1','B5','B3');
+
+11. Available Area, DWC Usage Area, Legal Case Area, Business Centre Area: 
+    - Main Table: stg_sf_InventoryUnit
+    - Category Column: Building_Number__c
+    - SQL Query: SELECT SUM(CASE WHEN LOWER(inv.Availability__c) IN ('available','reserved') THEN inv.Area_in_sq_m__c ELSE 0 END) AS AvailableArea,
+                       SUM(CASE WHEN LOWER(inv.Availability__c) = 'dwc usage' THEN inv.Area_in_sq_m__c ELSE 0 END) AS DWCUsageArea,
+                       SUM(CASE WHEN LOWER(inv.Availability__c) = 'legal case' THEN inv.Area_in_sq_m__c ELSE 0 END) AS LegalCaseArea,
+                       SUM(CASE WHEN inv.Is_BC_Inventory__c = 1 THEN inv.Area_in_sq_m__c ELSE 0 END) AS BusinessCentreArea
+                        FROM stg_sf_InventoryUnit inv
+                        WHERE LOWER(inv.Product_Type_Name__c) IN ('hq kiosk','head quarter','office park')
+                          AND inv.Parent_Unit__c IS NULL
+                          AND LOWER(inv.Record_Type_Name__c) IN ('atm','building','office')
+                          AND inv.Building_Number__c IN ('C1','C2','D1','D2','A1','A2','B2','A4','A3','A5','B4','HQ','B1','B5','B3');
+    - Rules:
+        - Only give information what is asked no extra information (like if Available Area is asked then show only available area same for dwc Usage, Legal Case and Business Centre Area)
+
+    === BUILDING VALIDATION RULES ===
+    
+    VALID BUILDINGS: Only these building codes are recognized for Business Park and Overview queries:
+    C1, C2, D1, D2, A1, A2, B2, A4, A3, A5, B4, HQ, B1, B5, B3
+    
+    STRICT RULE - IF THE USER MENTIONS A BUILDING NOT IN THE LIST ABOVE:
+    - DO NOT generate any SQL query.
+    - DO NOT query the database.
+    - Instead, respond ONLY with this exact message:
+      "⚠️ Building '[user_mentioned_building]' is not part of Business Park or Business Center. 
+       Valid buildings are: C1, C2, D1, D2, A1, A2, B2, A4, A3, A5, B4, HQ, B1, B5, B3"
+    
+    EXAMPLES OF INVALID BUILDINGS (reject these):
+    - B1-08, B108, X5, Z2, A9, D5, or any building not in the valid list above.
+    
+    EXAMPLES OF VALID BUILDINGS (allow these):
+    - B1, B2, B3, A1, HQ, C1, D2 etc. (must be exactly from the valid list).
+    
+    This rule applies to ALL metrics: Occupancy, Leased Area, Available Area, Net Leasable Area, 
+    DWC Usage, Legal Case, Business Centre Area, and any other building-level query.
+    =================================
+
+. Revenue & Lease Price Calculation Rules:
+
+- Never SUM a revenue column directly on a joined query. Always deduplicate first.
+- When calculating any revenue, lease price, rent, or charges — first GROUP BY contract ID and take MAX of the revenue column, then SUM the result in an outer query.
+- A contract joined with its line items produces multiple rows per contract. Always collapse to one row per contract before summing any money column.
+- These rules apply to every revenue-related column without exception: Total_Rent_Price_Formula__c, Actual_1st_Year_Rent__c, Annual_Service_Charges_Formula__c, Total_Service_Charges_Payments__c, Grand_Total__c.
+  
+
+. Time filters (Fabric Lakehouse SQL - preferred, safe across year boundaries):
+   - DEFAULT (no explicit time qualifier in user question): WHERE YEAR(Date column) = YEAR(GETDATE())
+   - Last month:WHERE YEAR(Date column) = YEAR(GETDATE()) AND MONTH(GETDATE()) = MONTH(GETDATE()) -1 
+   - Last quarter: WHERE YEAR(Date column) = YEAR(GETDATE()) AND DATEPART(QUARTER, Date column) = DATEPART(QUARTER, GETDATE()) - 1
+   - Last Week : WHERE YEAR(Date column) = YEAR(GETDATE()) AND DATEPART(WEEK, Date column) = DATEPART(WEEK, GETDATE()) - 1
+   - Last year:WHERE YEAR(Date column) = YEAR(GETDATE()) - 1
+   - Year-to-date (YTD):WHERE YEAR(Date column) = YEAR(GETDATE()) AND Date column <= GETDATE()
+   - Monthwise grouping (use these expressions  GROUP BY): GROUP BY YEAR(Date column), MONTH(Date column)
+   - Quarterwise grouping: GROUP BY YEAR(Date column), DATEPART(QUARTER, Date column)
+   - Yearwise grouping: GROUP BY YEAR(Date column)
+
+. Always alias aggregated fields clearly (e.g., SUM(Amount__c) AS Revenue, COUNT(DISTINCT Id) AS Deals).
+
+Notes for the LLM / SQL generator:
+- If user question contains no time keywords (e.g., "last month", "last quarter", "year", "monthwise"), apply the DEFAULT filter (current year).
+- If User question contains keywords(eg Month on Month, Quater on Quater, Week on Week,Daywise ), apply the the DEFAULT filter (current year).
+- Recognize common phrasings (Q2, last Q, current year, this year, last month, month-to-date) and map them to the patterns above.
+- If the result is shown by category, include the overall sum/total at the end.       

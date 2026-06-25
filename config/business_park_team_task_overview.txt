@@ -1,0 +1,439 @@
+
+
+Generalized Rules:
+
+    1. Inventory Unit is Inventory Name from SF_InventoryUnit_LK_LOAD1
+    2. Building_Number__c are like (eg. A1,B1,B2, HQ, D1,D2,C1,C2,A5) from SF_InventoryUnit_LK_LOAD1
+
+
+
+Data Dictionary :
+
+{
+  "data_dictionary": {
+    "stg_sf_TenancyContract": {
+      "description": "Core contract table representing tenancy agreements made with companies.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a contract done with a company."
+        },
+        "Name": {
+          "description": "Name of the contract, generally starts with 'TCO'. Helps identify the contract in Salesforce."
+        },
+        "First_Line_Item_Unit_Name__c": {
+          "description": "Inventory unit name leased for the contract. A contract can have multiple inventory units associated, but only the first one is chosen and tagged in this column."
+        },
+        "Number_of_Installments__c": {
+          "description": "Total number of payment installments for a contract between the contract start and end date."
+        },
+        "Rent_Free_Period_Days__c": {
+          "description": "Total number of days where rent is free. This period is outside of the contract start and end date."
+        },
+        "Tenant__c": {
+          "description": "Foreign key joining to stg_sf_Account. Represents the Client ID / Account ID."
+        },
+        "Contract_Start_Date__c": {
+          "description": "The starting date of the contract."
+        },
+        "Contract_Expiry_Date__c": {
+          "description": "The ending date of the contract."
+        },
+        "Rent_Start_Date__c": {
+          "description": "The official start date of contract payments on paper. May differ from Contract_Start_Date__c."
+        },
+        "Annual_Service_Charges_Formula__c": {
+          "description": "Service charges other than the annual rent of a contract."
+        },
+        "Total_Service_Charges_Payments__c": {
+          "description": "Total service charges payments other than the annual rent of a contract."
+        },
+        "Contract_Duration__c": {
+          "description": "Duration of the contract expressed in years."
+        },
+        "CS_Team_Member__c": {
+          "description": "Salesperson name who helped close the deal with the client. When coalesced with Opportunity_Lead_Owner__c, used as a joining key for stg_sf_SalespersonYearlyTarget."
+        },
+        "Opportunity_Lead_Owner__c": {
+          "description": "Salesperson name who helped close the deal with the client. When coalesced with CS_Team_Member__c, used as a joining key for stg_sf_SalespersonYearlyTarget."
+        },
+        "Lead_Source__c": {
+          "description": "The source of the lead (e.g., website, walk-in). Used to segment customers:",
+          "value_definitions": {
+            "New Client": "New customers to the business.",
+            "Upgrade Existing client": "Customers who upgraded their contract.",
+            "Downgrade Existing client": "Customers who downgraded their contract.",
+            "Downgrade from BP": "Customers who downgraded from a Business Park contract.",
+            "All": "Includes all lead sources.",
+            "New + Upgrade": "Includes 'New Client' and 'Upgrade Existing client'."
+          }
+        },
+        "Total_Area__c": {
+          "description": "The total area leased by the customer under the contract."
+        },
+        "DWC_Signed_Date__c": {
+          "description": "The date when the contract was signed. Used to determine the revenue timeline (monthly, yearly, and quarterly)."
+        },
+        "Actual_1st_Year_Rent__c": {
+          "description": "Used as the annual rent of the contract for products where Product_Type_Name__c in stg_sf_ContractLineItem contains 'smart' in the name."
+        },
+        "Total_Rent_Price_Formula__c": {
+          "description": "The annual rent for general cases (non-smart product types)."
+        },
+        "Renewed_Contract__c": {
+          "description": "If null, indicates this is a new customer contract (first contract). Otherwise, acts as a self-joining key to the details of the previous/old contract."
+        },
+        "Manually_Cancelled__c": {
+          "description": "Flag indicating whether the contract was manually cancelled by the client.",
+          "value_definitions": {
+            "0": "Not cancelled.",
+            "1": "Cancelled manually by the client."
+          }
+        },
+        "Activated_Date__c": {
+          "description": "The date the contract was activated. If null, no revenue has started coming into the business from this contract."
+        }
+      }
+    },
+
+    "stg_sf_ContractLineItem": {
+      "description": "Line item details associated with tenancy contracts, including product type information.",
+      "columns": {
+        "Contract__c": {
+          "description": "Foreign key joining to stg_sf_TenancyContract."
+        },
+        "Product_Type_Name__c": {
+          "description": "Product name for the business. For Business Park and Center, this field is used to identify the product type. Products containing 'smart' in the name use Actual_1st_Year_Rent__c as the annual rent."
+        }
+      }
+    },
+
+    "stg_sf_SalespersonYearlyTarget": {
+      "description": "Yearly targets set for each salesperson by the business.",
+      "columns": {
+        "From_Date__c": {
+          "description": "Start date of the salesperson's target period. Targets are primarily set on a yearly basis."
+        },
+        "To_Date__c": {
+          "description": "End date of the salesperson's target period. Targets are primarily set on a yearly basis."
+        },
+        "Target_Amount__c": {
+          "description": "The target revenue amount set by the business for the salesperson to achieve within the target period."
+        },
+        "Salesperson_Name__c": {
+          "description": "Name of the salesperson. Joining key to stg_sf_TenancyContract via CS_Team_Member__c or Opportunity_Lead_Owner__c."
+        },
+        "Total_leased_Area__c": {
+          "description": "The target leased area set by the business for the salesperson to achieve within the target period."
+        }
+      }
+    },
+
+    "stg_sf_Opportunity": {
+      "description": "Represents sales opportunities and deals tracked in Salesforce.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for an opportunity. Foreign key joining to stg_sf_OpportunityLineItem."
+        },
+        "IsClosed": {
+          "description": "Indicator of whether the opportunity deal is closed.",
+          "value_definitions": {
+            "0": "Deal is still in progress.",
+            "1": "Deal is closed."
+          }
+        },
+        "StageName": {
+          "description": "The stage the deal has reached.",
+          "possible_values": ["Opening", "Close Lost", "Close Won", "Closed Won"]
+        }
+      }
+    },
+
+    "stg_sf_OpportunityLineItem": {
+      "description": "Line items linked to opportunities, capturing product and salesperson details.",
+      "columns": {
+        "OpportunityId": {
+          "description": "Foreign key joining to stg_sf_Opportunity."
+        },
+        "OwnerId": {
+          "description": "The ID of the salesperson handling the opportunity. Foreign key joining to stg_sf_User."
+        },
+        "CloseDate": {
+          "description": "The date when talks between the salesperson and the client concluded."
+        },
+        "Product2Id": {
+          "description": "Foreign key joining to stg_sf_Product."
+        }
+      }
+    },
+
+    "stg_sf_Product": {
+      "description": "Product catalog used to classify opportunity line items by department or business unit.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a product. Foreign key joining to stg_sf_OpportunityLineItem."
+        },
+        "Name": {
+          "description": "Product names for different departments.",
+          "examples": ["HQ Kiosk", "Head Quarter", "Office Park"],
+          "note": "Used to identify Business Park and Center products."
+        }
+      }
+    },
+
+    "stg_sf_User": {
+      "description": "User table representing salespersons who manage opportunities.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a user. Foreign key joining to stg_sf_Opportunity."
+        },
+        "CompanyName": {
+          "description": "The name of the company to which the salesperson belongs."
+        },
+        "Name": {
+          "description": "The full name of the salesperson associated with the opportunity."
+        }
+      }
+    },
+
+    "stg_sf_Account": {
+      "description": "Represents client or customer accounts that sign tenancy contracts.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for an account or client. Foreign key joining to stg_sf_TenancyContract."
+        },
+        "Name": {
+          "description": "Customer name, client name, or account name of the entity signing the contracts."
+        }
+      }
+    },
+
+    "stg_sf_InventoryUnit": {
+      "description": "Represents individual inventory units (physical spaces) within buildings available for leasing.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for an inventory unit. Foreign key joining to stg_sf_ContractLineItem. Used to map inventory units to contracts."
+        },
+        "Current_Tenant_Name__c": {
+          "description": "The account name, client name, or tenant name of the entity currently using the building unit."
+        },
+        "Name": {
+          "description": "Name of the inventory unit."
+        },
+        "Availability__c": {
+          "description": "The current availability status of the inventory unit.",
+          "value_definitions": {
+            "Leased": "Unit is currently being used under an active contract.",
+            "Available": "Unit is available for a new contract.",
+            "Reserved": "Unit is booked for a client and deal discussions are still in progress.",
+            "DWC Usage": "Unit is used by the business for internal operations.",
+            "Legal Case": "Unit is in a legal dispute due to non-payment overdue.",
+            "Obsolete": "Unit is no longer available for business use and cannot be leased."
+          }
+        },
+        "Building_Number__c": {
+          "description": "The building number in which the inventory unit exists."
+        }
+      }
+    },
+
+    "stg_sf_QuoteLineItem": {
+      "description": "Line items belonging to a quote, used to calculate total quoted area.",
+      "columns": {
+        "QuoteId": {
+          "description": "Foreign key joining to stg_sf_Quote."
+        },
+        "Quantity": {
+          "description": "Summing Quantity grouped by QuoteId gives the total area quoted for a contract."
+        }
+      }
+    },
+
+    "stg_sf_Quote": {
+      "description": "Represents quotes generated during contract negotiations with clients.",
+      "columns": {
+        "Id": {
+          "description": "Unique identifier for a quote. Foreign key joining to stg_sf_QuoteLineItem."
+        },
+        "Status": {
+          "description": "The current stage or progress of the quote.",
+          "possible_values": ["Approved", "Signed", "Cancelled"]
+        },
+        "OpportunityId": {
+          "description": "Foreign key joining to stg_sf_Opportunity."
+        },
+        "Discounted_Annual_Rent__c": {
+          "description": "The price quoted to the client during negotiations, before the contract was officially signed."
+        }
+      }
+    }
+  }
+}
+ 
+Business Park Team Task Overview Rules:
+
+
+MANDATORY RULE - APPLIES TO ALL QUERIES:
+Every query involving salesperson, revenue, area, or contracts MUST include this filter:
+AND COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, '') 
+    IN ('Abbosjon Safarov', 'Ahmed Maanni', 'Anna Valeriano', 'Aristotle Eugenio', 'Mukti Gurung', 'Sana Nazarudeen')
+
+NEVER return results for any salesperson outside this list.
+If a question asks "who is the highest revenue salesperson", 
+the answer must come only from this list.
+
+
+1. Salesperson Revenue / Revenyue for all Salesperson / Revenue YTD Acheived Percentage /Revenue Yearly Acheived Percentage
+    - Main Table: stg_sf_TenancyContract
+    - Date Column: DWC_Signed_Date__c 
+    - Category Column: cli.Product_Name__c
+    - Custom Column: New: Lead_Source__c = "New Client" 
+                     All: Lead_Source__c in All
+                     Upgrade: Lead_Source__c = "Upgrade Existing client"
+                     Downgrade:  Lead_Source__c IN ("Downgrade Existing client", "Downgrade from BP") 
+                     New + Upgrade:  Lead_Source__c IN ("New Client", "Upgrade Existing client")
+
+    - SQL Query: SELECT 
+    SUM(GrandTotal) AS Achieved_YTD,Lead_Owner,SalespersonTarget,
+    (SUM(GrandTotal)/SalespersonTarget)*100  as RevenueYearlyTargetAcheievedPercentage,
+    (SUM(GrandTotal) / ((SalespersonTarget / 12.0) * MONTH(CURRENT_TIMESTAMP))) * 100 AS RevenueYTDTargetAchievedPercentage
+    FROM
+    (
+        SELECT 
+            t.Id,
+             COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, '') as Lead_Owner,
+             SYT.Target_Amount__c as SalespersonTarget,
+            CASE 
+                WHEN COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, '') IN ('Anna Valeriano', 'Ahmed Maanni') AND LOWER(cli.Product_Type_Name__c) LIKE '%smart%'
+                THEN MAX(t.Actual_1st_Year_Rent__c)
+                ELSE 
+                    MAX(t.Total_Rent_Price_Formula__c)
+            END AS GrandTotal
+        FROM stg_sf_TenancyContract t
+        LEFT JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+        LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id
+        LEFT JOIN stg_sf_SalespersonYearlyTarget SYT on SYT.Salesperson_Name__c=Coalesce(t.CS_Team_Member__c,t.Opportunity_Lead_Owner__c,'')
+        WHERE 
+            t.Manually_Cancelled__c = 0
+            AND t.Activated_Date__c IS NOT NULL
+            AND t.Renewed_Contract__c IS NULL
+            AND old.Id IS NULL
+            AND  COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, '') in 
+            (Abbosjon Safarov, Ahmed Maanni, Anna Valeriano, Aristotle Eugenio, Mukti Gurung, Sana Nazarudeen)
+            AND YEAR(SYT.From_Date__c)=YEAR(current_timestamp)
+            AND YEAR(t.DWC_Signed_Date__c)= YEAR(current_timestamp) and MONTH(t.DWC_Signed_Date__c) <= 12
+        GROUP BY 
+            t.Id,
+            COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, ''),
+            cli.Product_Type_Name__c,
+            Target_Amount__c
+    ) X
+    group by Lead_Owner,SalespersonTarget
+
+    - RULE: When generating revenue queries that reference a contract table plus any child table (e.g., SF_ContractLineItem_LK_LOAD), always produce SQL that 
+    (1) identifies eligible contracts (filter by product using EXISTS or join), 
+    (2) aggregates to a single row per contract (e.g., GROUP BY t.Id and MAX/SUM to compute a contract-level revenue), then 
+    (3) aggregates those contract-level rows into the requested period (day/month/quarter/year). Handle edge cases for previous-period calculations (Q1 → prev quarter = Q4 of prev year, month = January → prev month = Dec of prev year). Prefer old.Id IS NULL when excluding renewed contracts.
+    (4) If User question Mentions Salesperson or 
+        (4)(a) Salesperson Name: Abbosjon Safarov, Ahmed Maanni, Anna Valeriano, Aristotle Eugenio, Mukti Gurung, Sana Nazarudeen
+        (4)(b) Include Filter in the Inner Query: AND Opportunity_Lead_Owner__c= {Mentioned Salesperson} 
+            if only Salesperson is mentioned  Then Opportunity_Lead_Owner in (Abbosjon Safarov, Ahmed Maanni, Anna Valeriano, Aristotle Eugenio, Mukti Gurung, Sana Nazarudeen) Group by Salesperson
+        (4)(c) Always show %Acheieved (Revenue/Salesperson Target) with Revenue Numbers
+
+
+
+2. Salesperson Area / Area YTD  Acheived Percentage /Area Yearly Acheived Percentage
+    - Main Table: stg_sf_TenancyContract
+    - Date Column: DWC_Signed_Date__c 
+    - Category Column: cli.Product_Name__c
+    - Custom Column: New: Lead_Source__c = "New Client" 
+                     All: Lead_Source__c in All
+                     Upgrade: Lead_Source__c = "Upgrade Existing client"
+                     Downgrade:  Lead_Source__c IN ("Downgrade Existing client", "Downgrade from BP") 
+                     New + Upgrade:  Lead_Source__c IN ("New Client", "Upgrade Existing client")
+
+    - SQL Query: SELECT 
+    SUM(TotalAreaAchieved) AS Achieved_YTD,Lead_Owner,SalespersonTarget,
+    (SUM(TotalAreaAchieved)/SalespersonTarget)*100  as AreaYearlyTargetAcheievedPercentage,
+    (SUM(TotalAreaAchieved) / ((SalespersonTarget / 12.0) * MONTH(CURRENT_TIMESTAMP))) * 100 AS AreaYTDTargetAchievedPercentage
+    FROM
+    (
+        SELECT 
+            t.Id,
+             COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, '') as Lead_Owner,
+             SYT.Total_leased_Area__c as SalespersonTarget,
+            MAX(t.Total_Area__c) as  TotalAreaAchieved
+        FROM stg_sf_TenancyContract t
+        LEFT JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
+        LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id
+        LEFT JOIN stg_sf_SalespersonYearlyTarget SYT on SYT.Salesperson_Name__c=Coalesce(t.CS_Team_Member__c,t.Opportunity_Lead_Owner__c,'')
+        WHERE 
+            t.Manually_Cancelled__c = 0
+            AND t.Activated_Date__c IS NOT NULL
+            AND t.Renewed_Contract__c IS NULL
+            AND old.Id IS NULL
+            AND  COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, '') in 
+            ('Abbosjon Safarov','Ahmed Maanni','Aristotle Eugenio','Mukti Gurung','Anna Valeriano')
+            AND YEAR(SYT.From_Date__c)=YEAR(current_timestamp)
+            AND YEAR(t.DWC_Signed_Date__c)= YEAR(current_timestamp) and MONTH(t.DWC_Signed_Date__c) <= 12
+        GROUP BY 
+            t.Id,
+            COALESCE(t.CS_Team_Member__c, t.Opportunity_Lead_Owner__c, ''),
+            cli.Product_Type_Name__c,
+            Total_leased_Area__c
+    ) X
+    group by Lead_Owner,SalespersonTarget
+
+    - RULE: When generating revenue queries that reference a contract table plus any child table (e.g., SF_ContractLineItem_LK_LOAD), always produce SQL that 
+    (1) identifies eligible contracts (filter by product using EXISTS or join), 
+    (2) aggregates to a single row per contract (e.g., GROUP BY t.Id and MAX/SUM to compute a contract-level revenue), then 
+    (3) aggregates those contract-level rows into the requested period (day/month/quarter/year). Handle edge cases for previous-period calculations (Q1 → prev quarter = Q4 of prev year, month = January → prev month = Dec of prev year). Prefer old.Id IS NULL when excluding renewed contracts.
+    (4) If User question Mentions Salesperson or 
+        (4)(a) Salesperson Name: Abbosjon Safarov, Hammad Qureshi, Mukti Gurung,Victoria Obuda
+        (4)(b) Include Filter in the Inner Query: AND Opportunity_Lead_Owner__c= {Mentioned Salesperson} 
+            if only Salesperson is mentioned  Then Opportunity_Lead_Owner__c in ("Abbosjon Safarov", "Hammad Qureshi", "Mukti Gurung","Victoria Obuda") Group by Salesperson
+        (4)(c) Always show %Acheieved (Revenue/Salesperson Target) with Revenue Numbers
+
+
+
+3. Pipeline Customers/ Salesperson Pipeline / Offering Stage:
+    - Main Table: stg_sf_Opportunity
+    - Date Column: CloseDate 
+    - SQL Query: SELECT  U.Name AS User_Name,
+COUNT(DISTINCT  o.Id) AS PipelineDeals
+FROM stg_sf_Opportunity o
+LEFT JOIN stg_sf_OpportunityLineItem oli ON o.Id = oli.OpportunityId
+LEFT JOIN stg_sf_Product p  ON oli.Product2Id = p.Id
+LEFT JOIN stg_sf_User U ON U.Id = o.OwnerId
+WHERE 
+    (o.StageName NOT IN ('Close Lost','Close Won') OR o.StageName IS NULL)
+    AND YEAR(o.CloseDate) = YEAR(GETDATE())
+    AND p.Name IN ('HQ Kiosk', 'Head Quarter','Office Park')
+GROUP BY 
+    U.Name;
+
+
+
+
+    - RULE: When generating revenue queries that reference a contract table plus any child table (e.g., SF_ContractLineItem_LK_LOAD), always produce SQL that 
+    (1) identifies eligible contracts (filter by product using EXISTS or join), 
+    (2) aggregates to a single row per contract (e.g., GROUP BY t.Id and MAX/SUM to compute a contract-level revenue), then 
+    (3) aggregates those contract-level rows into the requested period (day/month/quarter/year). Handle edge cases for previous-period calculations (Q1 → prev quarter = Q4 of prev year, month = January → prev month = Dec of prev year). Prefer old.Id IS NULL when excluding renewed contracts.
+
+. Time filters (Fabric Lakehouse SQL - preferred, safe across year boundaries):
+   - DEFAULT (no explicit time qualifier in user question): WHERE YEAR(Date column) = YEAR(current_date())
+   - Last month:WHERE YEAR(Date column) = YEAR(current_date()) AND MONTH(Date column) = MONTH(current_date()) -1 
+   - Last quarter:WHERE YEAR(Date column) = YEAR(current_date()) AND QUARTER(Date column) = QUARTER(current_date()) - 1
+   - Last year:WHERE YEAR(Date column) = YEAR(current_date()) - 1
+   - Year-to-date (YTD):WHERE YEAR(Date column) = YEAR(current_date()) AND Date column <= current_date()
+   - Monthwise grouping (use these expressions  GROUP BY): GROUP BY YEAR(Date column), MONTH(Date column)
+   - Quarterwise grouping: GROUP BY YEAR(Date column), QUARTER(Date column)
+   - Yearwise grouping: GROUP BY YEAR(Date column)
+
+. Always alias aggregated fields clearly (e.g., SUM(Amount__c) AS Revenue, COUNT(DISTINCT Id) AS Deals).
+
+Notes for the LLM / SQL generator:
+- If user question contains no time keywords (e.g., "last month", "last quarter", "year", "monthwise"), apply the DEFAULT filter (current year).
+- If User question contains keywords(eg Month on Month, Quater on Quater, Week on Week,Daywise ), apply the the DEFAULT filter (current year).
+- Recognize common phrasings (Q2, last Q, current year, this year, last month, month-to-date) and map them to the patterns above.
+- If the result is shown by category, include the overall sum/total at the end.       
+- Return only valid Fabric Lakehouse SQL (no markdown, no fences). Use add_months() / add_years() helpers for cross-boundary correctness..

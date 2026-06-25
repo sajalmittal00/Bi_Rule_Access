@@ -1,0 +1,488 @@
+
+Generalized Rules:
+
+    1. Customer Name is Name from SF_Account_LK_LOAD
+    2. Contract Name is Name from SF_TenancyContract1_LK_LOAD
+    3. Invoice Name is  Name from SF_Invoice_LK_LOAD
+    4. Salesperson Name for Business Centre Are Ahmed Maanni, Anna Valerio, Deepa Odharni
+
+Business Centre Rules:
+
+
+1. Active Customers:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - SQL Query: SELECT COUNT(DISTINCT t.Id) AS Active_Customers FROM SF_TenancyContract1_LK_LOAD t
+                 INNER JOIN SF_ContractLineItem_LK_LOAD cli ON t.Id = cli.Contract__c
+                 LEFT JOIN SF_Account_LK_LOAD A ON t.Tenant__c = A.Id
+                 WHERE t.Manually_Cancelled__c = 'FALSE'
+                     AND t.Status__c = 'Active'
+                     AND (t.Cancellation_Date__c IS NULL OR t.Cancellation_Date__c >= GETDATE())
+                     AND (
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent exclusive office%'
+                     );
+                     
+    Rules:
+        - Dont Apply Date filters Until Mentioned in the User Question
+        - When the question refers to a single product name (like 'Smart Desk'), use '=' instead of LIKE. 
+        - When multiple product categories are involved, use 'IN' instead of LIKE
+
+2. Active Customer And Payment Amount/Revenue based on Product:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - SQL Query: SELECT cli.Product_Type_Name__c,COUNT(DISTINCT t.Id) AS Active_Customers, SUM(t.Actual_1st_Year_Rent__c) AS Actual_1st_Year_Rent FROM SF_TenancyContract1_LK_LOAD t
+                 INNER JOIN SF_ContractLineItem_LK_LOAD cli ON t.Id = cli.Contract__c
+                 LEFT JOIN SF_Account_LK_LOAD A ON t.Tenant__c = A.Id
+                 WHERE t.Status__c = 'Active'
+                     AND (t.Cancellation_Date__c IS NULL OR t.Cancellation_Date__c >= GETDATE())
+                     AND (
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent exclusive office%'
+                     )
+                     GROUP BY cli.Product_Type_Name__c;
+
+3. Active Customers based on Country:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - Date column: SF_TenancyContractPayments_LK_LOAD.Contract_Expiry_Date__c
+    - Category Columns: SF_Account_LK_LOAD.CountryName_of_Origin__c (Country Name)
+    - SQL Query: SELECT A.CountryName_of_Origin__c AS Country,COUNT(DISTINCT t.Id) AS Number_of_Customers,SUM(t.Actual_1st_Year_Rent__c) AS Actual_1st_Year_Rent FROM SF_TenancyContract1_LK_LOAD t
+                 INNER JOIN SF_ContractLineItem_LK_LOAD cli  ON t.Id = cli.Contract__c
+                 LEFT JOIN SF_Account_LK_LOAD A ON t.Tenant__c = A.Id
+                 WHERE 
+                     t.Status__c = 'Active'
+                     AND (
+                         t.Cancellation_Date__c IS NULL
+                         OR t.Cancellation_Date__c >= DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), 1, 1))
+                     )
+                     AND t.Contract_Expiry_Date__c >= DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), 1, 1))
+                     AND (
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent exclusive office%'
+                     )
+                 GROUP BY A.CountryName_of_Origin__c
+                 ORDER BY Actual_1st_Year_Rent DESC
+
+4. Active Customer Year on Year:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - Date column: SF_TenancyContractPayments_LK_LOAD.Contract_Expiry_Date__c
+    - Category Columns: SF_Account_LK_LOAD.CountryName_of_Origin__c (Country Name)
+    - SQL Query: SELECT YEAR(TCP.Due_Date__c) AS Year,COUNT(DISTINCT t.Id) AS Number_of_Customers,SUM(t.Actual_1st_Year_Rent__c) AS Actual_1st_Year_Rent FROM SF_TenancyContract1_LK_LOAD t
+                 INNER JOIN SF_ContractLineItem_LK_LOAD cli ON t.Id = cli.Contract__c
+                 LEFT JOIN SF_Account_LK_LOAD A ON t.Tenant__c = A.Id
+                 LEFT JOIN SF_TenancyContractPayments_LK_LOAD TCP ON t.Id = TCP.Tenancy_Contract__c
+                 WHERE t.Status__c = 'Active'
+                     AND (
+                         t.Cancellation_Date__c IS NULL 
+                         OR t.Cancellation_Date__c >= DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), 1, 1))
+                     )
+                     AND t.Contract_Expiry_Date__c >= DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), 1, 1))
+                     AND (
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart desk%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%smart office%' OR
+                         LOWER(cli.Product_Type_Name__c) LIKE '%permanent exclusive office%'
+                     )
+                 GROUP BY YEAR(TCP.Due_Date__c)
+                 ORDER BY Year;
+
+        
+5. Revenue / Overall Revenue: 
+   - Table: SF_TenancyContract1_LK_LOAD
+   - Date column: DWC_Signed_Date__c
+   - Custom Column:  All: Lead_Source__c in ("Downgrade Existing client", "Upgrade Existing client", "Direct Customer", "Walk-in lead", "Broker", "Cold Call", "Call Center", "Downgrade from BP" , "Marketing Compaign" , "Upgraded from Business Center")
+                     New: Lead_Source__c not in ("Downgrade Existing client", "Upgrade Existing client")
+                     Downgrade:  Lead_Source__c in ("Downgrade Existing client")
+                     New + Upgrade:  Lead_Source__c not in ("Downgrade Existing client")
+   - SQL Query: SELECT sum(Actual_1st_Year_Rent__c) AS Revenue, 
+                CASE WHEN YEAR(GETDATE()) = 2025 THEN 12500000 WHEN YEAR(GETDATE()) = 2024 THEN 10000000 ELSE 0 END AS TargetRevenue,
+                (SUM(Actual_1st_Year_Rent__c) / CASE WHEN YEAR(GETDATE()) = 2025 THEN 12500000 WHEN YEAR(GETDATE()) = 2024 THEN 10000000 ELSE 1 END ) * 100 AS Achievement_Percent 
+                FROM SF_TenancyContract1_LK_LOAD
+                WHERE IS_BC_Contract__c = 'TRUE'
+                  AND Manually_Cancelled__c = 'FALSE'
+                  AND Renewed_Contract__c IS NULL 
+                  AND Activated_Date__c IS NOT NULL 
+                  AND YEAR(DWC_Signed_Date__c) = YEAR(GETDATE())
+                  AND MONTH(DWC_Signed_Date__c) <= 12
+
+    Rules:
+       (1) If User question Mentions Salesperson or 
+        (1)(a) Salesperson Name: "Ahmed Maanni", "Anna Valerio", "Deepa Odhrani"
+        (1)(b) Include Filter: AND Opportunity_Lead_Owner__c= {Mentioned Salesperson} 
+            if only Salesperson is mentioned  Then Opportunity_Lead_Owner__c in ("Ahmed Maanni", "Anna Valerio", "Deepa Odhrani") Group by Salesperson dont mention any other salesperosn then these
+        (1)(c) Always show %Acheieved (Revenue/Salesperson Target) with Revenue Numbers
+        (1)(d) Sample SQL Template: SELECT t.Opportunity_Lead_Owner__c,SUM(t.Actual_1st_Year_Rent__c) AS Revenue,COUNT(DISTINCT t.Id) AS SalespersonDeals,CASE 
+                                    WHEN t.Opportunity_Lead_Owner__c = 'Ahmed Maanni' THEN 4000000
+                                    WHEN t.Opportunity_Lead_Owner__c = 'Anna Valerio' THEN 4500000
+                                    WHEN t.Opportunity_Lead_Owner__c = 'Deepa Odhrani' THEN 4000000
+                                    ELSE 0
+                                END AS Salesperson_Target,
+                                (SUM(t.Actual_1st_Year_Rent__c) / 
+                                    CASE 
+                                        WHEN t.Opportunity_Lead_Owner__c = 'Ahmed Maanni' THEN 4000000
+                                        WHEN t.Opportunity_Lead_Owner__c = 'Anna Valerio' THEN 4500000
+                                        WHEN t.Opportunity_Lead_Owner__c = 'Deepa Odhrani' THEN 4000000
+                                        ELSE 0
+                                    END
+                                ) * 100 AS Achievement_Percent
+                                FROM SF_TenancyContract1_LK_LOAD t
+                                LEFT JOIN SF_Account_LK_LOAD a ON t.Tenant__c = a.Id
+                                LEFT JOIN SF_ContractLineItem_LK_LOAD cli ON t.Id = cli.Contract__c
+                                WHERE t.IS_BC_Contract__c = 'TRUE' 
+                                  AND t.Manually_Cancelled__c = 'FALSE' 
+                                  AND t.Renewed_Contract__c IS NULL 
+                                  AND t.Activated_Date__c IS NOT NULL 
+                                  AND YEAR(t.DWC_Signed_Date__c) = YEAR(GETDATE())
+                                  AND MONTH(t.DWC_Signed_Date__c) <= 12
+                                  AND t.Opportunity_Lead_Owner__c IN ('Ahmed Maanni', 'Anna Valerio', 'Deepa Odhrani')
+                                GROUP BY t.Opportunity_Lead_Owner__c;
+        
+6. Number of Deals , New Deals Revenue:
+   - Table: SF_TenancyContract1_LK_LOAD
+   - Date column: DWC_Signed_Date__c
+   - SQL Query: SELECT COUNT(DISTINCT Id) as NewDealsCustomers, sum(Actual_1st_Year_Rent__c) as New_Deal_Revenue
+                FROM SF_TenancyContract1_LK_LOAD
+                WHERE IS_BC_Contract__c = 'TRUE' 
+                  AND Manually_Cancelled__c = 'FALSE' 
+                  AND Renewed_Contract__c IS NULL 
+                  AND Activated_Date__c IS NOT NULL 
+                  AND YEAR(DWC_Signed_Date__c) = YEAR(GETDATE())
+                  AND MONTH(DWC_Signed_Date__c) <= 12
+
+7. New Customers:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - Date column: DWC_Signed_Date__c
+    - Category Column: Opportunity_Lead_Owner__c (Salesperson who handled the New Coming Customers),
+                       A.CountryName_of_Origin__c (Country Name)
+                       Lead_Source__c (from where the Lead Generated like Cold Calls, Broker, Website, Downgrade Existing Customer, direct Customers, Emails)
+                       cli.Product_Type_Name__c (The product in Business Park like Smart Desk, Smart Office, Permanent Desk etc)
+    - SQL Query: SELECT COUNT(DISTINCT t.Id) AS New_Customers,sum(t.Actual_1st_Year_Rent__c) as New_Customer_Revenue FROM SF_TenancyContract1_LK_LOAD t
+                    INNER JOIN SF_ContractLineItem_LK_LOAD cli ON t.Id = cli.Contract__c
+                    LEFT JOIN SF_Account_LK_LOAD A ON t.Tenant__c = A.Id
+                WHERE LOWER(t.Lead_Source__c) NOT IN ('upgrade existing client', 'downgrade existing client') 
+                    AND t.IS_BC_Contract__c = 'TRUE' 
+                    AND t.Manually_Cancelled__c = 'FALSE' 
+                    AND t.Renewed_Contract__c IS NULL 
+                    AND t.Activated_Date__c IS NOT NULL 
+                    AND YEAR(t.DWC_Signed_Date__c) = YEAR(GETDATE())
+                    AND MONTH(t.DWC_Signed_Date__c) <= 12
+
+8. Upgrades:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - Date column: DWC_Signed_Date__c
+    - SQL Query: SELECT COUNT(DISTINCT Id) AS UpgradeCustomers,sum(Actual_1st_Year_Rent__c) as UpgradeCustomerRevenue FROM SF_TenancyContract1_LK_LOAD
+                WHERE LOWER(Lead_Source__c) IN ('upgrade existing client') 
+                    AND IS_BC_Contract__c = 'TRUE' 
+                    AND Manually_Cancelled__c = 'FALSE' 
+                    AND Renewed_Contract__c IS NULL 
+                    AND Activated_Date__c IS NOT NULL 
+                    AND YEAR(DWC_Signed_Date__c) = YEAR(GETDATE())
+                    AND MONTH(DWC_Signed_Date__c) <= 12
+
+9. Downgrades:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - Date column: DWC_Signed_Date__c
+    - SQL Query: SELECT COUNT(DISTINCT Id) AS DowngradeCustomers,sum(Actual_1st_Year_Rent__c) as DowngradesCustomerRevenue FROM SF_TenancyContract1_LK_LOAD
+                WHERE LOWER(Lead_Source__c) IN ('downgrade existing client') 
+                    AND IS_BC_Contract__c = 'TRUE' 
+                    AND Manually_Cancelled__c = 'FALSE' 
+                    AND Renewed_Contract__c IS NULL 
+                    AND Activated_Date__c IS NOT NULL 
+                    AND YEAR(DWC_Signed_Date__c) = YEAR(GETDATE())
+                    AND MONTH(DWC_Signed_Date__c) <= 12
+
+
+10. Inventory Occupany %/ Inventory %, Inventory Customers:
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - SQL Query: SELECT COALESCE(c.Product_Name, i.Product_Name) AS Product_Name,c.Number_of_Customers AS ActiveCustomers,i.Inventory_Count AS InventoryCustomers,(CAST(c.Number_of_Customers AS FLOAT) / NULLIF(i.Inventory_Count, 0)) * 100 AS InventoryOccupancyPercentage
+                 FROM (
+                     SELECT 
+                         COALESCE(cli.Product_Name__c, 'blanks') AS Product_Name,
+                         COUNT(DISTINCT t.Id) AS Number_of_Customers
+                     FROM SF_TenancyContract1_LK_LOAD t
+                     INNER JOIN SF_ContractLineItem_LK_LOAD cli ON t.Id = cli.Contract__c
+                     WHERE cli.Product_Type_Name__c IN ('Express Smart Desk','Permanent Desk','Permanent Office','Permanent Office 2','Smart Desk','Smart Office','Standard Smart Desk')
+                       AND t.Status__c = 'Active'
+                       AND t.Contract_Expiry_Date__c > GETDATE()
+                       AND (t.Cancellation_Date__c >= GETDATE() OR t.Cancellation_Date__c IS NULL)
+                     GROUP BY COALESCE(cli.Product_Name__c, 'blanks')
+                 ) c
+                 FULL OUTER JOIN (
+                     SELECT 
+                         p.Name AS Product_Name,
+                         COUNT(*) AS Inventory_Count
+                     FROM SF_InventoryUnit_LK_LOAD1 iu
+                     LEFT JOIN SF_Product_LK_LOAD p ON iu.Product_Type__c = p.Id
+                     WHERE p.Name IN ('Express Smart Desk','Permanent Desk','Permanent Office','Permanent Office 2','Smart Desk','Smart Office','Standard Smart Desk')
+                       AND (iu.Availability__c NOT IN ('Not Available', 'Obsolete') OR iu.Availability__c IS NULL)
+                     GROUP BY p.Name
+                 ) i
+                 ON c.Product_Name = i.Product_Name
+                 ORDER BY Product_Name;
+
+    - Rules 
+        1. Always show results Productwise
+        2. Inventory Names are like (eg: Express Smart Desk,Permanent Desk,Permanent Office,Permanent Office 2,Smart Desk,Smart Office,Standard Smart Desk)
+        3. If User Question Mentions Inventory Customer then only mention Inventory Customer vice versa with Active Customer and Inventory Occupany %
+
+11. Total Renewals , Total Renewals Revenue:
+       Table: SF_TenancyContract1_LK_LOAD 
+       Date column: Contract_Expiry_Date_Formula__c
+       SQL Query: SELECT COUNT(DISTINCT Id) AS Total_Renewals, SUM(Actual_1st_Year_Rent__c) AS Total_Renewals_Revenue
+                FROM SF_TenancyContract1_LK_LOAD
+                WHERE IS_BC_Contract__c = 'TRUE' 
+                  AND Manually_Cancelled__c = 'FALSE'
+                  AND LOWER(Record_Type_Name__c) <> 'approved'
+                  AND LOWER(Status__c) <> 'draft'
+                  AND (Cancellation_Date__c IS NULL OR (YEAR(Cancellation_Date__c) = YEAR(GETDATE())))
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12;
+
+        Rules:
+       (1) If User question Mentions the question includes words like “by salesperson”, “per salesperson”, or directly mentions a salesperson’s name.
+        (1)(a) Salesperson Name:  Ahmed Maanni, Ah Ma, Alia Alsaboori, Anna Valerio, Hajer Guesmi, Karen Valerino
+        (1)(d) Sample SQL Template: SELECT U.Name,COUNT(DISTINCT T.Id) AS Renewals
+                FROM SF_TenancyContract1_LK_LOAD T
+                LEFT JOIN SF_User_LK_LOAD U ON U.Email=lower(T.Renewal_Assigned_To__c)
+                WHERE Lead_Source__c  not in ('Downgrade Existing client',  'Upgrade Existing client')
+                  AND IS_BC_Contract__c = 'TRUE' 
+                  AND Manually_Cancelled__c = 'FALSE'
+                  AND LOWER(Record_Type_Name__c) <> 'approved'
+                  AND LOWER(Status__c) <> 'draft'
+                  AND (Cancellation_Date__c IS NULL OR (YEAR(Cancellation_Date__c) = YEAR(GETDATE())))
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12
+                  group by U.Name
+
+
+
+12. Renewed, Renewed Revenue:
+       Table: SF_TenancyContract1_LK_LOAD 
+       Category Column: Renewal_Assigned_To__c (Salesperson Name)
+       Date column: Old_Contract_Expiry_Date__c
+       SQL Query: SELECT COUNT(DISTINCT Id) AS Reneweds, SUM(Actual_1st_Year_Rent__c) AS Reneweds_Revenue
+                    FROM SF_TenancyContract1_LK_LOAD
+                    WHERE IS_BC_Contract__c = 'TRUE' 
+                      AND Manually_Cancelled__c = 'FALSE'
+                      AND Renewed_Contract__c IS NOT NULL
+                      AND Activated_Date__c IS NOT NULL
+                      AND YEAR(Old_Contract_Expiry_Date__c) = YEAR(GETDATE())
+                      AND MONTH(Old_Contract_Expiry_Date__c) <= 12;
+
+        Rules:
+       (1) If User question Mentions the question includes words like “by salesperson”, “per salesperson”, or directly mentions a salesperson’s name.
+        (1)(a) Salesperson Name:  Ahmed Maanni, Ah Ma, Alia Alsaboori, Anna Valerio, Hajer Guesmi, Karen Valerino
+        (1)(d) Sample SQL Template: SELECT U.Name,COUNT(DISTINCT T.Id) AS Renewals
+                    FROM SF_TenancyContract1_LK_LOAD T
+                    LEFT JOIN SF_User_LK_LOAD U ON lower(U.Email)=lower(T.Renewal_Assigned_To__c)
+                    WHERE IS_BC_Contract__c = 'TRUE' 
+                      AND Lead_Source__c  not in ('Downgrade Existing client',  'Upgrade Existing client')
+                      AND Manually_Cancelled__c = 'FALSE'
+                      AND Status__c = 'Renewed'
+                      AND Activated_Date__c IS NOT NULL
+                      AND YEAR(Contract_Expiry_Date__c) = YEAR(GETDATE())
+                      AND MONTH(Contract_Expiry_Date__c) <= 12
+                      group by U.Name
+
+
+13. Pending Renewals, Pending Renewals Revenue:
+       Table: SF_TenancyContract1_LK_LOAD 
+       Date column: Contract_Expiry_Date_Formula__c
+       SQL Query: SELECT COUNT(DISTINCT Id) AS Pending_Renewals, SUM(Actual_1st_Year_Rent__c) AS Pending_Renewals_Revenue
+                FROM SF_TenancyContract1_LK_LOAD
+                WHERE Status__c IN ('Active', 'Expired')
+                  AND IS_BC_Contract__c = 'TRUE'
+                  AND Manually_Cancelled__c = 'FALSE'
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12;
+       Rules:
+       (1) If User question Mentions the question includes words like 'by salesperson', 'per salesperson', or directly mentions a salesperson’s name.
+        (1)(a) Salesperson Name:  Ahmed Maanni, Ah Ma, Alia Alsaboori, Anna Valerio, Hajer Guesmi, Karen Valerino
+        (1)(d) Sample SQL Template: SELECT U.Name,COUNT(DISTINCT T.Id) AS Pending_Renewals
+                FROM SF_TenancyContract1_LK_LOAD T
+                LEFT JOIN SF_User_LK_LOAD U ON lower(U.Email)=lower(T.Renewal_Assigned_To__c)
+                WHERE Status__c IN ('Active', 'Expired')
+                  AND Lead_Source__c  not in ('Downgrade Existing client',  'Upgrade Existing client')
+                  AND IS_BC_Contract__c = 'TRUE'
+                  AND Manually_Cancelled__c = 'FALSE'
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12
+                  Group by U.Name
+
+14. Pending Termination,Pending Termination Revenue:
+       - Table: SF_TenancyContract1_LK_LOAD 
+       - Date column: Contract_Expiry_Date_Formula__c
+       - SQL Query: SELECT COUNT(DISTINCT Id) AS Pending_Terminations, SUM(Actual_1st_Year_Rent__c) AS Pending_Termination_Revenue
+                FROM SF_TenancyContract1_LK_LOAD
+                WHERE Cancellation_Type__c = 'Cancel and Upgrade'
+                  AND Status__c IN ('Approved', 'Cancelled', 'In Review', 'Submitted To Finance')
+                  AND Record_Type_Name__c <> 'Approved'
+                  AND IS_BC_Contract__c = 'TRUE'
+                  AND Manually_Cancelled__c = 'FALSE'
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12;
+
+
+ 15. Cancel and Upgrade:
+      - Table: SF_TenancyContract1_LK_LOAD 
+      - Date column: Contract_Expiry_Date_Formula__c
+      - SQL Query:  SELECT COUNT(DISTINCT Id) AS CancelledAndUpgraded,SUM(Actual_1st_Year_Rent__c) AS CancelledAndUpgradedRent FROM SF_TenancyContract1_LK_LOAD
+                WHERE Cancellation_Type__c = 'Cancel and Upgrade'
+                  AND IS_BC_Contract__c='TRUE'
+                  AND Status__c IN ('Approved', 'Cancelled', 'In Review', 'Submitted To Finance')
+                  AND Record_Type_Name__c <> 'Approved'
+                  AND YEAR(Cancellation_Date__c) = YEAR(GETDATE())
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12;
+
+ 16. Cancel and Downgrade:
+      - Table: SF_TenancyContract1_LK_LOAD 
+      - Date column: Contract_Expiry_Date_Formula__c
+      - SQL Query:  SELECT COUNT(DISTINCT Id) AS CancelledAndDowngrade,SUM(Actual_1st_Year_Rent__c) AS CancelledAndDowngradeRent FROM SF_TenancyContract1_LK_LOAD
+                WHERE Cancellation_Type__c = 'Cancel and Downgrade'
+                  AND IS_BC_Contract__c='TRUE'
+                  AND Status__c IN ('Approved', 'Cancelled', 'In Review', 'Submitted To Finance')
+                  AND Record_Type_Name__c <> 'Approved'
+                  AND YEAR(Cancellation_Date__c) = YEAR(GETDATE())
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12;
+
+17. Cancellations, Cancellation Revenue:
+      - Table: SF_TenancyContract1_LK_LOAD 
+      - Date column: Contract_Expiry_Date_Formula__c
+      - SQL Query:  SELECT COUNT(DISTINCT Id) AS Cancellations,SUM(Actual_1st_Year_Rent__c) AS CancellationsRent,Cancellation_Type__c FROM SF_TenancyContract1_LK_LOAD
+                WHERE Cancellation_Type__c  in ('Cancel Company','Termination','Cancel Unit','Cancel and Downgrade','Cancel and Upgrade')
+                  AND IS_BC_Contract__c='TRUE'
+                  AND Status__c IN ('Approved', 'Cancelled', 'In Review', 'Submitted To Finance')
+                  AND Record_Type_Name__c <> 'Approved'
+                  AND YEAR(Cancellation_Date__c) = YEAR(GETDATE())
+                  AND YEAR(Contract_Expiry_Date_Formula__c) = YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c) <= 12
+                  group by Cancellation_Type__c
+
+     - Rules:
+        1. Always show by Cancellation Types
+        2. If MoM, YoY or any timeframe is mentioned in the user question always use Contract_Expiry_Date_Formula__c
+
+18. Terminations, Termination Revenue: 
+      - Table: SF_TenancyContract1_LK_LOAD 
+      - Date column: Contract_Expiry_Date_Formula__c
+      - SQL Query: SELECT COUNT(DISTINCT Id) AS Termination,SUM(Actual_1st_Year_Rent__c) AS TerminationRent FROM SF_TenancyContract1_LK_LOAD
+                WHERE Cancellation_Type__c = 'Termination'
+                  AND Record_Type_Name__c <> 'Approved'
+                  AND IS_BC_Contract__c='TRUE'
+                  AND Status__c IN ('Approved', 'Cancelled', 'In Review', 'Submitted To Finance')
+                  AND (YEAR(Cancellation_Date__c) = YEAR(GETDATE()) OR Cancellation_Date__c is null)
+                  AND YEAR(Contract_Expiry_Date_Formula__c)= YEAR(GETDATE())
+                  AND MONTH(Contract_Expiry_Date_Formula__c)<=12
+        
+19. Under Process 
+       Table: SF_TenancyContract1_LK_LOAD 
+       Date column: Old_Contract_Expiry_Date__c
+       Measure: SELECT COUNT(DISTINCT t.Id) AS UnderProcess
+                FROM SF_TenancyContract1_LK_LOAD t
+                INNER JOIN SF_TenancyContract1_LK_LOAD Old_Contracts 
+                    ON t.Renewed_Contract__c = Old_Contracts.Id
+                WHERE Old_Contracts.Status__c IN ('Active', 'Expired')
+                AND t.IS_BC_Contract__c = 'TRUE'
+                AND t.Manually_Cancelled__c = 'FALSE'
+                AND t.First_Line_Item_Unit_Name__c LIKE '%BC%'
+                AND YEAR(t.Old_Contract_Expiry_Date__c) = YEAR(GETDATE())
+                AND MONTH(t.Old_Contract_Expiry_Date__c) <= 12
+
+
+20. Pipeline Revenue:
+    - Table : SF_Opportunity_LK_LOAD
+    - Date column: CloseDate
+    - SQL Query: SELECT  SUM(t.Actual_1st_Year_Rent__c) AS Actual_1st_Year_Rent
+                FROM SF_Opportunity_LK_LOAD o
+                INNER JOIN SF_OpportunityLineItem_LK_LOAD oli ON o.Id = oli.OpportunityId
+                INNER JOIN SF_Product_LK_LOAD p ON oli.Product2Id = p.Id
+                INNER JOIN SF_InventoryUnit_LK_LOAD1 iu ON o.Id = iu.Current_Opportunity__c
+                INNER JOIN SF_TenancyContract1_LK_LOAD t ON iu.Current_Tenancy_Contracts__c = t.Id
+                WHERE 
+                    o.StageName IN ('Closing', 'Offer Letter')
+                    AND YEAR(CloseDate)= YEAR(GETDATE())
+                    AND LOWER(p.Name) IN ('express smart desk', 'permanent desk', 'permanent office', 'smart desk', 'smart office', 'standard smart desk')
+
+21. Pipeline Area ,Pipeline Projected Area , Area by Stage Name,  Pipeline Deals , Pipeline Customers, Pipeline Revenue by StageName:
+    - Table : SF_Opportunity_LK_LOAD
+    - Date column: CloseDate
+    - Category Column: User.Name (They are the Pipeline CS Team Member handling the Customer Deals)
+    - SQL Query: SELECT  o.StageName,SUM(qli.TotalArea) AS Area_in_sq_m,COUNT(DISTINCT quote.Id) AS No_of_Deals,SUM(quote.Discounted_Annual_Rent__c) AS PipelineRevenue
+                 FROM SF_Opportunity_LK_LOAD o
+                 LEFT JOIN SF_OpportunityLineItem_LK_LOAD oli ON o.Id = oli.OpportunityId
+                 LEFT JOIN SF_Product_LK_LOAD p ON oli.Product2Id = p.Id
+                 LEFT JOIN SF_Quote_LK_LOAD quote ON o.Id = quote.OpportunityId
+                 LEFT JOIN (
+                     SELECT QuoteId, SUM(Quantity) AS TotalArea 
+                     FROM SF_QuoteLineItem_LK_LOAD 
+                     GROUP BY QuoteId
+                 ) qli ON qli.QuoteId = quote.Id
+                 LEFT JOIN SF_User_LK_LOAD U ON U.Id = o.OwnerId
+                 LEFT JOIN SF_InventoryUnit_LK_LOAD1 iu ON o.Id = iu.Current_Opportunity__c
+                 LEFT JOIN SF_TenancyContract1_LK_LOAD t ON iu.Current_Tenancy_Contracts__c = t.Id
+                 WHERE 
+                     (o.StageName NOT IN ('Closed Won','Close Lost','Close Won','Opening') OR o.StageName IS NULL)
+                     AND YEAR(CloseDate) = YEAR(GETDATE())
+                     AND quote.Status IN ('Signed','Approved')
+                     AND p.Name IN ('Express Smart Desk', 'Permanent Desk', 'Permanent Office', 'Smart Desk', 'Smart Office', 'Standard Smart Desk', 'Permanent Office 2')
+                 GROUP BY o.StageName;
+
+
+22. Remaining Amount, Payement Recieved, Payment Amount:
+   - Table: SF_Invoice_LK_LOAD1,SF_TenancyContract1_LK_LOAD,SF_TenancyContractPayments_LK_LOAD
+   - Date column: SF_Invoice_LK_LOAD1.Due_Date__c
+   - Category Column: SF_Invoice_LK_LOAD1.Account_Name__c
+   - SQL Query: SELECT SUM(i.Remaining_Amount__c) AS RemainingAmount, SUM(i.Paid_Amount__c) AS PaidAmount, SUM(i.Amount__c) AS PaymentAmount FROM SF_Invoice_LK_LOAD1 i
+                    LEFT JOIN SF_TenancyContract1_LK_LOAD t  ON i.Tenancy_Contract__c = t.Id
+                    LEFT JOIN SF_TenancyContractPayments_LK_LOAD tcp ON i.Tenancy_Contract_Payments__c = tcp.Id
+                    WHERE i.Status__c IN ('Paid', 'Partially Paid', 'Posted')
+                        AND (i.Account_Name__c <> 'TEST DWC-LLC' OR i.Account_Name__c IS NULL)
+                        AND (t.Status__c NOT IN ('Approved', 'Approved By Finance', 'Draft') OR t.Status__c IS NULL)
+                        AND tcp.Product_Name__c IN ('Permanent Desk', 'Permanent Office', 'Smart Desk', 'Smart Office', 'Virtual Office')
+    
+23. Broker Customer , Broker Actual 1st Year Rent
+    - Table : SF_TenancyContract1_LK_LOAD 
+    - Date column: SF_TenancyContractPayments_LK_LOAD.DWC_Signed_Date__c
+    - Measure: SELECT  COUNT(DISTINCT t.Id) AS Broker_Customers,SUM(t.Actual_1st_Year_Rent__c) AS Broker_Actual_1st_Year_Rent FROM SF_TenancyContract1_LK_LOAD t
+               LEFT JOIN SF_Quote_LK_LOAD q ON t.Quote__c = q.Id
+               LEFT JOIN SF_Opportunity_LK_LOAD o ON q.OpportunityId = o.Id
+                WHERE t.Lead_Source__c = 'Broker'
+                  AND t.IS_BC_Contract__c = 'TRUE'
+                  AND t.Manually_Cancelled__c = 'FALSE'
+                  AND t.Renewed_Contract__c IS NULL
+                  AND t.Activated_Date__c IS NOT NULL
+                  AND o.Broker_Account__c IS NOT NULL
+                  AND t.Lead_Source__c <> 'Downgrade Existing client'
+                  AND YEAR(t.DWC_Signed_Date__c) = YEAR(GETDATE())
+                  AND MONTH(t.DWC_Signed_Date__c) <= MONTH(GETDATE())
+
+24. Growth Revenue = 29.7 AED
+
+. Time filters (Fabric Lakehouse SQL - preferred, safe across year boundaries):
+   - DEFAULT (no explicit time qualifier in user question): WHERE YEAR(Date column) = YEAR(GETDATE())
+   - Last month:WHERE YEAR(Date column) = YEAR(GETDATE()) AND MONTH(GETDATE()) = MONTH(GETDATE()) -1 
+   - Last quarter: WHERE YEAR(Date column) = YEAR(GETDATE()) AND DATEPART(QUARTER, Date column) = DATEPART(QUARTER, GETDATE()) - 1
+   - Last Week : WHERE YEAR(Date column) = YEAR(GETDATE()) AND DATEPART(WEEK, Date column) = DATEPART(WEEK, GETDATE()) - 1
+   - Last year:WHERE YEAR(Date column) = YEAR(GETDATE()) - 1
+   - Year-to-date (YTD):WHERE YEAR(Date column) = YEAR(GETDATE()) AND Date column <= GETDATE()
+   - Monthwise grouping (use these expressions  GROUP BY): GROUP BY YEAR(Date column), MONTH(Date column)
+   - Quarterwise grouping: GROUP BY YEAR(Date column), DATEPART(QUARTER, Date column)
+   - Yearwise grouping: GROUP BY YEAR(Date column)
+
+. Always alias aggregated fields clearly (e.g., SUM(Amount__c) AS Revenue, COUNT(DISTINCT Id) AS Deals).
+
+Notes for the LLM / SQL generator:
+- If user question contains no time keywords (e.g., "last month", "last quarter", "year", "monthwise"), apply the DEFAULT filter (current year).
+- If User question contains keywords(eg Month on Month, Quater on Quater, Week on Week,Daywise ), apply the the DEFAULT filter (current year).
+- Recognize common phrasings (Q2, last Q, current year, this year, last month, month-to-date) and map them to the patterns above.
+- If the result is shown by category, include the overall sum/total at the end.       

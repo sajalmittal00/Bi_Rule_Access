@@ -1,0 +1,296 @@
+
+
+Generalized Rules:
+
+
+Licensing rules:
+
+1. Overall Active licenses:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: License_Expiry_Date__c
+   - Category Column: Legal_Form__c 
+   - SQL Query: SELECT COUNT(DISTINCT Id) AS ActiveLicense FROM SF_Account_LK_LOAD
+                WHERE Current_License_Number__c IS NOT NULL
+                AND Is_Expo_Commercial__c = FALSE
+                AND Is_Expo_Concession__c = FALSE
+                AND EXPO_Participants_Registration__c = FALSE
+                AND Company_Deregistration_Date__c IS NULL
+                AND Legal_Form__c IN ('DWC-Branch', 'DWC-LLC')
+                AND Record_Type_Name__c <> 'Freelancer'
+                AND Name <> 'International Trading (Test) 1'
+                AND Current_License_Status__c IS NOT NULL
+                AND License_Expiry_Date__c >= CURRENT_DATE
+
+   - RULE : When the query is asking for the total number of active licenses across all accounts, without specifying a breakdown by country, department, or legal form, use this query:
+            Provide only the total active license count satisfying all current-status filters.
+
+2. Active Licenses by a Category (Group by Country/Department/Legal form):
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: License_Expiry_Date__c
+   - Category Column: CountryName_of_Origin__c (These are the Country Names)
+                      Department__c (These are the Departments from where License are attained)
+                      Legal_Form__c  ('DWC-Branch', 'DWC-LLC')
+   - SQL Query: SELECT CountryName_of_Origin__c,COUNT(DISTINCT Current_License_Number__c) AS ActiveLicense FROM SF_Account_LK_LOAD
+                WHERE YEAR(License_Expiry_Date__c) >= YEAR(CURRENT_DATE)
+                AND Legal_Form__c IN ('DWC-Branch', 'DWC-LLC')
+                AND EXPO_Participants_Registration__c = FALSE
+                AND Is_Expo_Concession__c = FALSE
+                AND Is_Expo_Commercial__c = FALSE
+                group by CountryName_of_Origin__c
+
+   - RULE : When the query requests active licenses grouped by any category such as Country, Department, or Legal Form, use this query:
+            Provide a count grouped by the specified category, showing the number of active licenses in each group, using only records matching group conditions.
+
+3. Active Licenses by ShareHolders Type
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: License_Expiry_Date__c
+   - SQL Query: SELECT S.Type_of_Shareholder__c,COUNT(DISTINCT S.Id) AS ActiveLicense FROM SF_Account_LK_LOAD A
+                LEFT JOIN SF_ShareOwnership_LK_LOAD S on S.Company__c=A.Id
+                WHERE YEAR(A.License_Expiry_Date__c) >= YEAR(CURRENT_DATE)
+                AND A.Legal_Form__c IN ('DWC-Branch', 'DWC-LLC')
+                AND A.EXPO_Participants_Registration__c = FALSE
+                AND A.Is_Expo_Concession__c = FALSE
+                AND A.Is_Expo_Commercial__c = FALSE
+                group by S.Type_of_Shareholder__c
+
+4. Expired Licenses:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: License_Expiry_Date__c
+   - Category Column: Department__c
+   - SQL Query: SELECT COUNT(DISTINCT Id) AS ExpiredLicense FROM SF_Account_LK_LOAD
+                WHERE Current_License_Number__c IS NOT NULL
+                AND Is_Expo_Commercial__c = FALSE
+                AND Is_Expo_Concession__c = FALSE
+                AND EXPO_Participants_Registration__c = FALSE
+                AND Company_Deregistration_Date__c IS NULL
+                AND Record_Type_Name__c <> 'Freelancer'
+                AND Current_License_Status__c = 'Expired'
+                AND License_Expiry_Date__c >= '2020-01-01'
+
+5. Expected Revenue:
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Category Column: Request_Type__c
+   - SQL Query: Select sum(RF.Total__c) as ExpectedRevenue from SF_LicensingRequest_LK_LOAD1 L
+                LEFT JOIN SF_Account_LK_LOAD A on L.Account_Name__c = A.Id
+                LEFT JOIN SF_RequestFee_LK_LOAD RF on L.Id=RF.Licensing_Request__c
+                where L.Main_Service__c= TRUE
+                AND L.Is_Test_Record__c= FALSE 
+                and RF.acbox__Status__c in ('Blocked','Invoiced')
+
+   - Request_Type__c: 
+
+6. License Renewals:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: SF_License_LK_LOAD.License_Renewed_Date__c
+   - Category Column: Department__c
+   - SQL Query: Select count(DISTINCT L.Id) from  SF_Account_LK_LOAD A
+                LEFT JOIN SF_License_LK_LOAD L on L.Licensed_Company__c=A.Id
+                where YEAR(L.License_Renewed_Date__c) >= YEAR(Current_date)
+                AND L.License_Renewed_Date__c is not null
+                AND A.EXPO_Participants_Registration__c=FALSE
+                AND A.Is_Expo_Commercial__c=FALSE
+                AND A.Is_Expo_Concession__c=FALSE 
+                AND A.Record_Type_Name__c <> 'Freelancer'
+                and L.License_Status__c='Renewal'
+
+7. Freelancers Active License:
+   - Primary Table: SF_Account_LK_LOAD
+   - SQL Query: SELECT COUNT(DISTINCT Id) AS FreelancerActiveLicense FROM SF_Account_LK_LOAD
+                WHERE Record_Type_Name__c = 'Freelancer'
+                AND Current_License_Number__c is not null
+                AND License_Expiry_Date__c >= current_date()
+                AND Current_License_Status__c='Active'
+
+8. Freelancers Renewal License:
+   - Primary Table: SF_Account_LK_LOAD
+   - SQL Query: SELECT COUNT(DISTINCT Id) AS FreelancerActiveLicense FROM SF_Account_LK_LOAD
+                WHERE Record_Type_Name__c = 'Freelancer'
+                AND YEAR(Current_License_Renewed_Date__c) = YEAR(current_date())
+                AND Current_License_Status__c='Active'
+
+9. Approved Licenses, Approved Licenses by Service Requests:
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Date Column: Submitted_Date__c
+   - Catergory Column: SF_LicensingRequest_LK_LOAD1.Service_Request__c
+   - SQL Query: SELECT COUNT(DISTINCT L.Id) AS ApprovedLicenses, sum(RF.Total__c) as ApprovedExpectedRevenue FROM  SF_LicensingRequest_LK_LOAD1 L
+                LEFT JOIN SF_RequestFee_LK_LOAD RF on RF.Licensing_Request__c=L.Id
+                WHERE L.Is_Test_Record__c=FALSE
+                AND L.Main_Service__c=TRUE
+                AND L.Status__c in ("Approved","Establishment Card Under Process")
+
+10. Rejected Licenses:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: Submitted_Date__c
+   - Catergory Column: SF_LicensingRequest_LK_LOAD1.Service_Request__c
+   - SQL Query: SELECT COUNT(DISTINCT Id) AS RejectedLicenses FROM  SF_LicensingRequest_LK_LOAD1
+                WHERE Is_Test_Record__c=FALSE
+                AND Main_Service__c=TRUE
+                AND Status__c in ("Not Approved")
+
+11. Registration With Licenses:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: Current_License_Issue_Date__c
+   - SQL Query: Select count(DISTINCT Id) from  SF_Account_LK_LOAD 
+                where EXPO_Participants_Registration__c=FALSE
+                AND Is_Expo_Commercial__c=FALSE
+                AND Is_Expo_Concession__c=FALSE
+                AND Current_License_Issue_Date__c >='2020-01-01'
+                AND Current_License_Issue_Date__c is not null
+                AND Current_License_Number__c is not NULL
+                AND Legal_Form__c in ("DWC-Branch","DWC-LLC")
+                AND Record_Type_Name__c in ("DWC Account - Registered")
+
+12. Registration Without Licenses:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: Company_Registration_Date__c
+   - SQL Query: Select count(DISTINCT Id) from  SF_Account_LK_LOAD 
+                where Name not like "%Demo%" and NAme not like "%Test%"
+                AND EXPO_Participants_Registration__c=FALSE
+                AND Is_Expo_Commercial__c=FALSE
+                AND Is_Expo_Concession__c=FALSE
+                AND Company_Registration_Date__c >='2020-01-01'
+                AND Company_Registration_Date__c is not null
+                AND Current_License_Number__c is  NULL
+                AND Legal_Form__c in ("DWC-Branch","DWC-LLC")
+                AND Record_Type_Name__c in ("Close Lost","DWC Account - Registered")
+
+13. Registration With Deregistered Licenses:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: Company_Deregistration_Date__c
+   - SQL Query: Select count(DISTINCT Id) from  SF_Account_LK_LOAD 
+                where EXPO_Participants_Registration__c=FALSE
+                AND Is_Expo_Commercial__c=FALSE
+                AND Is_Expo_Concession__c=FALSE
+                AND Company_Deregistration_Date__c >'2016-01-01'
+                AND Record_Type_Name__c in ("DWC Account - Deregistered")
+                AND Publication_Initiated_Date__c is not null
+
+14. Registration Under Registration,Registration Under Registration by Edited by/Resgistrar:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: Company_Deregistration_Date__c
+   - Catergory Column: SF_User_LK_LOAD.Name (This are the Registrar Names)
+   - SQL Query: Select count(DISTINCT A.Id) from  SF_Account_LK_LOAD A
+                LEFT JOIN SF_User_LK_LOAD U on U.Id=A.Registrar_Assigned__c
+                where (A.Name not like '%Sahara Resources Trading DWC-LLC%' OR A.Name not like '%NOOR ENZYMES DWC-LLC%' OR A.Name not like '%Insurlens Solutions DWC-LLC%')
+                AND YEAR(A.Company_Registration_Date__c) >= YEAR(current_date)
+                AND A.Internal_Testing_Account__c = FALSE
+   
+
+15. Registration Under-Deregistration,Registration Under-Deregistration by Edited by/Resgistrar :
+   - Primary Table: SF_AccountHistory_LK_LOAD
+   - Catergory Column: SF_User_LK_LOAD.Name (This are the Names who edited the State)
+   - SQL Query: Select Count(DISTINCT AH.Id) from SF_AccountHistory_LK_LOAD AH
+                LEFT JOIN SF_Account_LK_LOAD A on AH.AccountId = A.Id
+                LEFT JOIN SF_User_LK_LOAD U on U.Id=AH.CreatedById
+                WHERE A.Current_Employment_Visas__c=0
+                AND A.Current_Student_Visas__c=0
+                AND A.Current_Visit_Visas__c=0
+                AND A.Current_Visit_Visas_3_Months__c=0
+                AND A.Record_Type_Name__c ='DWC Account - Under Deregistration'
+                AND AH.NewValue='DWC Account - Under Deregistration'
+
+16. Drafts Licenses, Draft Licenses by Service Request: 
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Date Column: Submitted_Date__c
+   - Catergory Column: Service_Request__c
+   - SQL Query: SELECT COUNT(DISTINCT Id) AS DraftLicenses FROM  SF_LicensingRequest_LK_LOAD1
+                WHERE Is_Test_Record__c=FALSE
+                AND Main_Service__c=TRUE
+                AND Status__c='Draft'
+   - Service_Request__c: 
+
+17. Submitted Licenses, Submitted Licenses by  Service Request:
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Date Column: Submitted_Date__c
+   - Catergory Column: Service_Request__c
+   - SQL Query: SELECT COUNT(DISTINCT L.Id) AS SubmittedLicenses FROM  SF_LicensingRequest_LK_LOAD1 L
+                LEFT JOIN SF_User_LK_LOAD U on L.OwnerId=U.Id
+                WHERE L.Is_Test_Record__c=FALSE
+                AND L.Main_Service__c=TRUE
+                AND L.Submitted_Date__c is not null
+                AND (U.Name not like '%Customer Queue%' OR U.Name not like '%System Admin%')
+
+18. Pending with Customers Licenses, Pending with Customers Licenses by Service Request: 
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Date Column: Submitted_Date__c
+   - Catergory Column: Service_Request__c
+   - SQL Query: SELECT COUNT(DISTINCT Id) AS DraftLicenses FROM  SF_LicensingRequest_LK_LOAD1
+                WHERE Is_Test_Record__c=FALSE
+                AND Main_Service__c=TRUE
+                AND Status__c not in ('Approved','Draft','Establishment Card Under Process','Not Approved','Submitted')
+
+19. Digital Letters Certificates Total Request/ Digital Letters Certificates Total Request by Action Templates Names
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Date Column: CreatedDate
+   - Category Column: SF_ActionTemplate_LK_LOAD.Name
+   - SQL Query: SELECT COUNT(DISTINCT L.Id) AS LettersandCertificatesTotalRequest FROM  SF_LicensingRequest_LK_LOAD1 L
+                LEFT JOIN SF_Account_LK_LOAD A on L.Account_Name__c = A.Id
+                LEFT JOIN SF_ActionTemplate_LK_LOAD TA on L.Action_Template__c=TA.Id
+                WHERE L.Status__c in ("Approved","Submitted","Invalid")
+                and YEAR(L.CreatedDate)=YEAR(Current_date)
+                AND A.Internal_Testing_Account__c=FALSE
+
+   - SF_ActionTemplate_LK_LOAD.Name:
+
+20. Digital Letters/Certificates Paid Requests/Paid Invoices,Digital Letters/Certificates Revenue :
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Date Column: CreatedDate
+   - SQL Query: SELECT COUNT(DISTINCT I.Name) AS LettersandCertificatesPaidRequest,sum(I.Paid_Amount__c) LettersandCertificatesRevenue FROM  SF_LicensingRequest_LK_LOAD1 L
+                LEFT JOIN SF_Account_LK_LOAD A on L.Account_Name__c = A.Id
+                LEFT OUTER JOIN SF_Invoice_LK_LOAD1 I on I.Licensing_Request__c=L.Id
+                WHERE L.Name is not null
+                AND YEAR(L.CreatedDate)=YEAR(Current_date)
+                AND I.Status__c='Paid'
+                AND A.Internal_Testing_Account__c=FALSE
+
+21. DFZC Reports/ DFZC request by Users:
+   - Primary Table: SF_DFZCRequest_LK_LOAD1
+   - Date Column: CreatedDate, SF_Account_LK_LOAD.Department__c
+   - Category Column: SF_User_LK_LOAD.Name
+   - SQL Query: SELECT count(DISTINCT D.Id) FROM SF_DFZCRequest_LK_LOAD1 D
+                INNER JOIN SF_User_LK_LOAD U on D.CreatedById=U.Id
+                INNER JOIN SF_Account_LK_LOAD A on A.Id=D.Account__c
+                where YEAR(D.CreatedDate)=YEAR(Current_date)
+                AND A.Internal_Testing_Account__c= FALSE
+   - SF_Account_LK_LOAD.Department__c :
+
+
+22. Total Licensing Team Task: 
+   - Primary Table: SF_LicensingRequest_LK_LOAD1
+   - Date Column: SF_RequestAction_LK_LOAD1.acbox__Closed_Datetime__c
+   - Category Column: SF_User_LK_LOAD.Name (Request Action Owner Name)
+   - SQL Query: SELECT Count(DISTINCT RA.Id) AS TotalTask FROM  SF_LicensingRequest_LK_LOAD1 L
+                LEFT JOIN SF_RequestAction_LK_LOAD1 RA on RA.Licensing_Request__c=L.Id
+                LEFT JOIN SF_User_LK_LOAD U on U.Id=RA.OwnerId
+                WHERE RA.acbox__Closed_Datetime__c BETWEEN current_date - INTERVAL 7 Days AND Current_date 
+                AND RA.acbox__Object_API_Name__c='Licensing_Request__c'
+                AND U.Name in ('Dawood Al Tahery','Maitha AlHosani','Sultan Almheiri','Salmin BinSalmin')
+                AND RA.Menu_Group__c not in ('Letters and Certificates','Certificate','NOCs','True Copy')
+                AND RA.Licensing_service__c=TRUE
+                AND L.Is_Test_Record__c= FALSE
+
+23. Publication by Publication Status:
+   - Primary Table: SF_Account_LK_LOAD
+   - Date Column: Publication_Initiated_Date__c
+   - SQL Query: SELECT Publication_Status__c,Count(DISTINCT Id) AS PublicationCount FROM  SF_Account_LK_LOAD 
+                WHERE Publication_Initiated_Date__c is not null
+                AND Record_Type_Name__c='DWC Account - Under Deregistration'
+                group BY Publication_Status__c
+
+   - Publication_Status__c:
+
+. Time filters (Fabric Lakehouse SQL - preferred, safe across year boundaries):
+   - DEFAULT (no explicit time qualifier in user question): WHERE YEAR(Date column) = YEAR(current_date())
+   - Last month:WHERE YEAR(Date column) = YEAR(current_date()) AND MONTH(Date column) = MONTH(current_date()) -1 
+   - Last quarter:WHERE YEAR(Date column) = YEAR(current_date()) AND QUARTER(Date column) = QUARTER(current_date()) - 1
+   - Last year:WHERE YEAR(Date column) = YEAR(current_date()) - 1
+   - Year-to-date (YTD):WHERE YEAR(Date column) = YEAR(current_date()) AND Date column <= current_date()
+   - Monthwise grouping (use these expressions  GROUP BY): GROUP BY YEAR(Date column), MONTH(Date column)
+   - Quarterwise grouping: GROUP BY YEAR(Date column), QUARTER(Date column)
+   - Yearwise grouping: GROUP BY YEAR(Date column)
+
+. Always alias aggregated fields clearly (e.g., SUM(Amount__c) AS Revenue, COUNT(DISTINCT Id) AS Deals).
+
+Notes for the LLM / SQL generator:
+- Recognize common phrasings (Q2, last Q, current year, this year, last month, month-to-date) and map them to the patterns above.
+- If the result is shown by category, include the overall sum/total at the end.       
