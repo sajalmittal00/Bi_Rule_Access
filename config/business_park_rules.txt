@@ -427,8 +427,10 @@ Business Park Rules:
     LEFT JOIN stg_sf_Account  a on t.Tenant__c = a.Id
     LEFT JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
     LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id
+    LEFT JOIN stg_sf_InventoryUnit IU on IU.Id=cli.Inventory_Unit__c
     WHERE
       LOWER(cli.Product_Name__c) IN ('hq kiosk','head quarter','office park')
+      AND IU.Record_Type_Name__c <> 'Retail'
       AND t.Activated_Date__c IS NOT NULL
       AND t.Manually_Cancelled__c = 0
       AND old.Name IS NULL
@@ -455,12 +457,14 @@ Business Park Rules:
             FROM stg_sf_TenancyContract t
             LEFT JOIN stg_sf_ContractLineItem cli ON t.Id = cli.Contract__c
             LEFT JOIN stg_sf_TenancyContract old ON t.Renewed_Contract__c = old.Id 
+            LEFT JOIN stg_sf_InventoryUnit IU on IU.Id=cli.Inventory_Unit__c
             WHERE
-                t.Manually_Cancelled__c = 0
+                    t.Manually_Cancelled__c = 0
                 AND t.Activated_Date__c IS NOT NULL
                 AND YEAR(t.DWC_Signed_Date__c) = YEAR(CURRENT_TIMESTAMP)
                 AND MONTH(t.DWC_Signed_Date__c) <= 12
                 AND old.Id IS NULL
+                AND IU.Record_Type_Name__c <> 'Retail'
                 AND (
                        cli.Product_Name__c IN
                        ('HQ Kiosk','Head Quarter','Office Park')
